@@ -23,13 +23,21 @@ Route::prefix("user")->name("user.")->group(function(){
     Route::controller(DashboardController::class)->group(function(){
         Route::get('dashboard','index')->name('dashboard');
         Route::post('logout','logout')->name('logout');
-        Route::delete('delete/account','deleteAccount')->name('delete.account')->middleware('app.mode');
+        Route::delete('delete/account','deleteAccount')->name('delete.account');
     });
     Route::controller(ProfileController::class)->prefix("profile")->name("profile.")->group(function(){
         Route::get('/','index')->name('index');
-        Route::put('update','update')->name('update')->middleware('app.mode');
-        Route::get('change/password','changePassword')->name('change.password')->middleware('app.mode');
-        Route::put('password/update','passwordUpdate')->name('password.update')->middleware('app.mode');
+        Route::put('update','update')->name('update');
+        Route::get('change/password','changePassword')->name('change.password');
+        Route::put('password/update','passwordUpdate')->name('password.update');
+        Route::put('update-user-info','updateinfo')->name('update.info');
+
+
+
+
+
+
+
     });
     //Transfer  Money
     Route::controller(TransferMoneyController::class)->prefix('transfer-money')->name('transfer.money.')->middleware('kyc.verification.guard')->group(function(){
@@ -163,7 +171,12 @@ Route::prefix("user")->name("user.")->group(function(){
     Route::controller(AuthorizationController::class)->prefix("authorize")->name('authorize.')->group(function(){
         Route::get('kyc','showKycFrom')->name('kyc');
         Route::post('kyc/submit','kycSubmit')->name('kyc.submit');
+        Route::post('update-user-info','updateinfo')->name('updateinfo.submit');
+        Route::post('update-verify-info','updateverifyinfo')->name('verify.submit');
+
+
     });
+
 
 });
 Route::get('user/pusher/beams-auth', function (Request $request) {

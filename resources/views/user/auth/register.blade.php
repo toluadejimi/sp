@@ -25,7 +25,7 @@
         <div class="account-middle">
             <div class="account-form-area">
                 <h3 class="title">Register Information</h3>
-                <p>Please input your details and register to your account to get access to your dashboard.</p>
+                <p>Please input your valid details and register to your account to get access to your dashboard.</p>
                 <form class="account-form" action="{{ setRoute('user.register.submit') }}" method="POST">
                     @csrf
                     <div class="row ml-b-20">
@@ -36,6 +36,16 @@
                                 'value'         => old("firstname"),
                             ])
                         </div>
+
+                        <div class="col-lg-12 form-group">
+                            @include('admin.components.form.input',[
+                                'name'          => "middlename",
+                                'placeholder'   => "Middle Name",
+                                'value'         => old("middlename"),
+                            ])
+                        </div>
+
+
                         <div class="col-lg-12 form-group">
                             @include('admin.components.form.input',[
                                 'name'          => "lastname",

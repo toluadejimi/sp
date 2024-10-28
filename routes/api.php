@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\User\WithdrawController;
 */
 
 
+
+
 Route::get('clear-cache', function() {
     Artisan::call('cache:clear');
     Artisan::call('config:clear');
@@ -39,6 +41,11 @@ Route::get('clear-cache', function() {
     $message =  ['success'=>['Clear cache successfully']];
     return Helpers::onlysuccess($message);
 });
+
+Route::post('webhook', [AddMoneyController::class,'webhook']);
+
+
+
 Route::get('useful-links', function() {
     $type = Str::slug(App\Constants\GlobalConst::USEFUL_LINKS);
     $policies =SetupPage::orderBy('id',"ASC")->where('type', $type)->where('status',1)->get()->map(function($link){
@@ -174,6 +181,11 @@ Route::prefix('user')->group(function(){
             });
 
             Route::get('transactions', [UserController::class,'transactions']);
+
+
+
+
+
              //add money
             Route::controller(AddMoneyController::class)->prefix("add-money")->group(function(){
                 Route::get('/information','addMoneyInformation');

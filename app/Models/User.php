@@ -37,6 +37,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'firstname'                 => 'string',
+        'midddlename'                  => 'string',
         'lastname'                  => 'string',
         'username'                  => 'string',
         'email'                     => 'string',

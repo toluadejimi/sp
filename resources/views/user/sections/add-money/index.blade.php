@@ -19,15 +19,15 @@
     <div class="deposit-wrapper ptb-50">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-lg-6 col-md-8 pb-30">
-                    <div class="deposit-form">
-                        <div class="form-title text-center">
-                            <h3 class="title">{{ __($page_title) }}</h3>
-                        </div>
-                        <div class="row justify-content-center">
-                            <form class="card-form" action="{{ setRoute("user.add.money.submit") }}" method="POST">
-                             @csrf
-                            <div class="col-lg-12">
+{{--                <div class="col-lg-6 col-md-8 pb-30">--}}
+{{--                    <div class="deposit-form">--}}
+{{--                        <div class="form-title text-center">--}}
+{{--                            <h3 class="title">{{ __($page_title) }}</h3>--}}
+{{--                        </div>--}}
+{{--                        <div class="row justify-content-center">--}}
+{{--                            <form class="card-form" action="{{ setRoute("user.add.money.submit") }}" method="POST">--}}
+{{--                             @csrf--}}
+{{--                            <div class="col-lg-12">--}}
 {{--                                <div class="form-group">--}}
 {{--                                    <label>{{ __("Payment Gateway") }}<span>*</span></label>--}}
 {{--                                     <div class="method ">--}}
@@ -50,82 +50,150 @@
 {{--                                     </div>--}}
 
 {{--                                </div>--}}
-                                <div class="form-group">
-                                    <label>{{ __("Enter Amount") }}<span>*</span></label>
-                                    <input type="number" required class="form--control" placeholder="{{ __("Enter Amount") }}" name="amount" value="{{ old("amount") }}">
-                                    <div class="currency">
-                                        <p>{{ get_default_currency_code() }}</p>
-                                    </div>
-                                </div>
-                                <div class="note-area d-flex justify-content-between">
-                                    <div class="d-block limit-show">--</div>
-                                    <div class="d-block fees-show">--</div>
-                                </div>
-                                  <div class="button pt-3">
-                                    <button type="submit" class="btn--base w-100 btn-loading sendBtn">{{ __("Confirm") }}</i></button>
-                                  </div>
-                            </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+{{--                                <div class="form-group">--}}
+{{--                                    <label>{{ __("Enter Amount") }}<span>*</span></label>--}}
+{{--                                    <input type="number" required class="form--control" placeholder="{{ __("Enter Amount") }}" name="amount" value="{{ old("amount") }}">--}}
+{{--                                    <div class="currency">--}}
+{{--                                        <p>{{ get_default_currency_code() }}</p>--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
+{{--                                <div class="note-area d-flex justify-content-between">--}}
+{{--                                    <div class="d-block limit-show">--</div>--}}
+{{--                                    <div class="d-block fees-show">--</div>--}}
+{{--                                </div>--}}
+{{--                                  <div class="button pt-3">--}}
+{{--                                    <button type="submit" class="btn--base w-100 btn-loading sendBtn">{{ __("Confirm") }}</i></button>--}}
+{{--                                  </div>--}}
+{{--                            </div>--}}
+{{--                            </form>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
                 <div class="col-lg-6 col-md-8">
+
                     <div class="deposit-form">
                         <div class="form-title text-center pb-4">
-                            <h3 class="title">{{ __($page_title) }} {{ __("preview") }}</h3>
-                        </div>
-                        <div class="preview-item d-flex justify-content-between">
-                            <div class="preview-content">
-                                <p>{{ __("Enter Amount") }}</p>
+{{--                            <h3 class="title">{{ __($page_title) }} {{ __("preview") }}</h3>--}}
+                            <h3  class="title">Top up your wallet</h3>
+
+                            <p style="font-size: 12px">Send money to the account below, your NGN wallet will be funded</p>
+
+                            <div class="preview-item d-flex justify-content-between">
+                                <div class="preview-content">
+                                    <p>Bank</p>
+                                </div>
+                                <div class="preview-content">
+                                    <p class="">{{$va->bank}}</p>
+                                </div>
                             </div>
-                            <div class="preview-content">
-                                <p class="request-amount"> </p>
+
+
+                            <div class="preview-item d-flex justify-content-between">
+                                <div class="preview-content">
+                                    <p>Account Name</p>
+                                </div>
+                                <div class="preview-content">
+                                    <p class="">{{$va->account_name}}</p>
+                                </div>
                             </div>
+
+
+                            <div class="preview-item d-flex justify-content-between">
+                                <div class="preview-content">
+                                    <p>Account No</p>
+                                </div>
+                                <div class="preview-content">
+                                    <p style="color: transparent" id="textToCopy" class="">{{$va->account_no}}</p>
+                                </div>
+
+                                <div class="preview-content">
+                                    <span class="copy-icon" onclick="copyText()">{{$va->account_no}}📋</span>
+                                </div>
+                            </div>
+
+
+                            <script>
+                                function copyText() {
+                                    const text = document.getElementById("textToCopy").innerText;
+                                    const tempInput = document.createElement("input");
+                                    document.body.appendChild(tempInput);
+                                    tempInput.value = text;
+                                    tempInput.select();
+                                    document.execCommand("copy");
+                                    document.body.removeChild(tempInput);
+                                    alert("Account number copied successfully!");
+                                }
+                            </script>
+
+
+
+
+
+
                         </div>
 
-                        <div class="preview-item d-flex justify-content-between">
-                            <div class="preview-content">
-                                <p>{{ __("Exchange Rate") }}</p>
-                            </div>
-                            <div class="preview-content">
-                                <p class="rate-show">--</p>
-                            </div>
-                        </div>
-                        <div class="preview-item d-flex justify-content-between">
-                            <div class="preview-content">
-                                <p>{{__("Fees & Charges")}}</p>
-                            </div>
-                            <div class="preview-content">
-                                <p class="fees">--</p>
-                            </div>
-                        </div>
-                        <div class="preview-item d-flex justify-content-between">
-                            <div class="preview-content">
-                                <p>{{__("Conversion Amount")}}</p>
-                            </div>
-                            <div class="preview-content">
-                                <p class="conversionAmount">--</p>
-                            </div>
-                        </div>
-                        <div class="preview-item d-flex justify-content-between">
-                            <div class="preview-content">
-                                <p>{{__("Will Get")}}</p>
-                            </div>
-                            <div class="preview-content">
-                                <p class="will-get">--</p>
-                            </div>
-                        </div>
 
-                        <div class="preview-item d-flex justify-content-between">
-                            <div class="preview-content">
-                                <p>{{ __("Total Payable Amount") }}</p>
-                            </div>
-                            <div class="preview-content">
-                                <p class="pay-in-total">--</p>
-                            </div>
-                        </div>
+
+
+
+
+{{--                        <div class="preview-item d-flex justify-content-between">--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p>{{ __("Enter Amount") }}</p>--}}
+{{--                            </div>--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p class="request-amount"> </p>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+
+{{--                        <div class="preview-item d-flex justify-content-between">--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p>{{ __("Exchange Rate") }}</p>--}}
+{{--                            </div>--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p class="rate-show">--</p>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                        <div class="preview-item d-flex justify-content-between">--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p>{{__("Fees & Charges")}}</p>--}}
+{{--                            </div>--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p class="fees">--</p>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                        <div class="preview-item d-flex justify-content-between">--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p>{{__("Conversion Amount")}}</p>--}}
+{{--                            </div>--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p class="conversionAmount">--</p>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                        <div class="preview-item d-flex justify-content-between">--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p>{{__("Will Get")}}</p>--}}
+{{--                            </div>--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p class="will-get">--</p>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+
+{{--                        <div class="preview-item d-flex justify-content-between">--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p>{{ __("Total Payable Amount") }}</p>--}}
+{{--                            </div>--}}
+{{--                            <div class="preview-content">--}}
+{{--                                <p class="pay-in-total">--</p>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
 
                     </div>
+
+
+
+
+
                 </div>
             </div>
         </div>

@@ -61,9 +61,7 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         $validated = $this->validator($request->all())->validate();
-
         $basic_settings             = $this->basic_settings;
-
         $validated = Arr::except($validated,['agree']);
         $validated['email_verified']    = ($basic_settings->email_verification == true) ? false : true;
         $validated['sms_verified']      = ($basic_settings->sms_verification == true) ? false : true;
@@ -98,7 +96,7 @@ class RegisterController extends Controller
         $basic_settings = $this->basic_settings;
         $passowrd_rule = "required|string|min:6";
         if($basic_settings->secure_password) {
-            $passowrd_rule = ["required",Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
+            $passowrd_rule = ["required",Password::min(4)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
         }
         if( $basic_settings->agree_policy){
             $agree ='required|in:on';
@@ -108,6 +106,7 @@ class RegisterController extends Controller
 
         return Validator::make($data,[
             'firstname'     => 'required|string|max:60',
+            'middlename'     => 'required|string|max:60',
             'lastname'      => 'required|string|max:60',
             'register_email'         => 'required|string|email|max:150|unique:users,email',
             'register_password'      => $passowrd_rule,

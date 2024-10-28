@@ -136,6 +136,8 @@ class UserController extends Controller
             $data = $request->all();
             $rules = [
                 'first_name' => 'required',
+                'last_name' => 'required',
+                'middle_name' => 'required',
                 'email' => 'required|regex:/(.+)@(.+)\.(.+)/i|email|unique:users',
                 'username' => 'required|string|regex:/\w*$/|max:255|unique:users,username',
                 'password' => 'required|string|min:6',
@@ -144,6 +146,8 @@ class UserController extends Controller
             //Validation message
             $customMessage = [
                 'first_name.required' => 'First name is required',
+                'last_name.required' => 'Last name is required',
+                'middle_name.required' => 'Middle name is required',
                 'email.required' => 'Email is required',
                 'password.required' => 'Password is required',
                 'accept.required' => 'Please Accept Terms Of Use , Privacy Policy & Warning'
@@ -156,6 +160,7 @@ class UserController extends Controller
                 $user = new User();
                 $user->username = Str::lower($data['username']);
                 $user->first_name = $data['first_name'];
+                $user->middle_name = $data['middle_name'];
                 $user->last_name = $data['last_name'];
                 $user->email = $data['email'];
                 $user->password = Hash::make($data['password']);

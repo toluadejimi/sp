@@ -67,6 +67,9 @@ class PaymentGatewayConst {
         return Str::slug(self::ADDMONEY);
     }
 
+
+
+
     public static function money_out_slug() {
         return Str::slug(self::MONEYOUT);
     }

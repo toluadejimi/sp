@@ -270,13 +270,13 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
             try {
 
 
-                if ($file_extension != "webp") {
-                    $webp = Webp::make($file_instance)->save($save_path . "/" . $store_file_name);
-                    array_push($output_files_name, $store_file_name);
-                } else {
-                    File::move($file_instance, $save_path . "/" . $file_base_name);
-                    array_push($output_files_name, $file_base_name);
-                }
+//                if ($file_extension != "webp") {
+//                    $webp = Webp::make($file_instance)->save($save_path . "/" . $store_file_name);
+//                    array_push($output_files_name, $store_file_name);
+//                } else {
+//                    File::move($file_instance, $save_path . "/" . $file_base_name);
+//                    array_push($output_files_name, $file_base_name);
+//                }
             } catch (Exception $e) {
                 return back()->with(['error' => ['Something went wrong! Failed to upload file.']]);
             }
@@ -1440,13 +1440,13 @@ function imageExtenstions() {
     return ['png','jpg','jpeg','svg','webp','gif'];
 }
 
-function its_image(string $string) {
-    if(!is_string($string)) return false;
-    $extension = explode(".",$string);
-    $extension = strtolower(end($extension));
-    if(in_array($extension,imageExtenstions())) return true;
-    return false;
-}
+//function its_image(string $string) {
+//    if(!is_string($string)) return false;
+//    $extension = explode(".",$string);
+//    $extension = strtolower(end($extension));
+//    if(in_array($extension,imageExtenstions())) return true;
+//    return false;
+//}
 
 function get_file_link($path_source, $name = null) {
     if($name == null) return false;

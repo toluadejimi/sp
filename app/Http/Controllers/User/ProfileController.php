@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Providers\Admin\BasicSettingsProvider;
 use Exception;
 use Illuminate\Http\Request;
@@ -116,4 +117,12 @@ class ProfileController extends Controller
         return back()->with(['success' => [__('Password successfully updated!')]]);
 
     }
+
+
+
+
+
+
+
+
 }

@@ -58,15 +58,17 @@
                     data-dark_img="{{ get_logo($basic_settings,'dark') }}" alt="logo"></a>
             </div>
             <h5 class="title">{{__("Register Information")}}</h5>
-            <p>{{ __("Please input your details and register to your account to get access to your dashboard.") }}</p>
+            <p>{{ __("Please input your valid details and register to your account to get access to your dashboard.") }}</p>
             <form class="account-form" action="{{ setRoute('user.register.submit') }}" method="POST">
                 @csrf
                 <div class="row ml-b-20">
-                    <div class="col-lg-6 form-group">
-
+                    <div class="col-lg-12 form-group">
                             <input type="text" class="form-control form--control" name="firstname" placeholder="{{ __("first Name") }}" required value="{{ old('firstname') }}">
                     </div>
-                    <div class="col-lg-6 form-group">
+                    <div class="col-lg-12 form-group">
+                        <input type="text" class="form-control form--control" name="middlename" placeholder="{{ __("Middle Name") }}" required value="{{ old('middlename') }}">
+                    </div>
+                    <div class="col-lg-12 form-group">
                     <input type="text" class="form-control form--control" name="lastname" placeholder="{{ __("last Name") }}" required value="{{ old('lastname') }}">
                     </div>
                     <div class="col-lg-12 form-group">

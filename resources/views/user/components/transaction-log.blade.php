@@ -16,6 +16,8 @@
                                 <h4 class="title">{{ __("Add Balance via") }} <span class="text--warning">{{ @$item->currency->name }}</span></h4>
                             @elseif (@$item->type == payment_gateway_const()::WITHDRAWMONEY)
                                 <h4 class="title">{{ __("Withdraw Money") }} <span class="text--warning">{{ @$item->currency->gateway->name }}</span></h4>
+                            @elseif (@$item->type == "SPRINT-PAY")
+                                <h4 class="title">{{ __("Add Money") }} <span class="text--warning">SPRINT PAY</span></h4>
                             @elseif (@$item->type == payment_gateway_const()::VIRTUALCARD)
                                 <h4 class="title">{{ __("Virtual Card") }} <span class="text--info">({{ __(@$item->remark) }})</span></h4>
                             @elseif (@$item->type == payment_gateway_const()::TYPEADDSUBTRACTBALANCE)
@@ -41,6 +43,9 @@
                         <h4 class="main-money text--warning">{{ get_amount(@$item->request_amount,get_default_currency_code(),4) }}</h4>
                         <h6 class="exchange-money fw-bold">{{ get_amount(@$item->payable,@$item->currency->currency_code,4) }}</h6>
                     @elseif(@$item->type == payment_gateway_const()::WITHDRAWMONEY)
+                        <h6 class="exchange-money text--warning fw-bold">{{ get_amount(@$item->request_amount,get_default_currency_code()) }}</h6>
+                        <h4 class="main-money ">{{ get_amount(@$item->payable,get_default_currency_code()) }}</h4>
+                    @elseif(@$item->type == "SPRINT-PAY")
                         <h6 class="exchange-money text--warning fw-bold">{{ get_amount(@$item->request_amount,get_default_currency_code()) }}</h6>
                         <h4 class="main-money ">{{ get_amount(@$item->payable,get_default_currency_code()) }}</h4>
                     @elseif(@$item->type == payment_gateway_const()::BILLPAY)
