@@ -101,11 +101,20 @@
                         </div>
                         <div class="card-balance">
                             <h2 class="title">{{__("Card Balance")}}</h2>
-                            @php
-                                $live_card_data = card_details($myCard->card_id,$card_api->config->strowallet_public_key,$card_api->config->strowallet_url);
-                            @endphp
 
-                            <span class="text--base">{{ getAmount(updateStroWalletCardBalance(auth()->user(),$myCard->card_id,$live_card_data),2) }}{{ get_default_currency_symbol() }}</span>
+                            @if($myCard->card_brand == "Sprint")
+
+                                <span class="text--base">{{ get_default_currency_symbol() }} {{number_format($wallet, 2)}}</span>
+
+                            @else
+                                @php
+                                    $live_card_data = card_details($myCard->card_id,$card_api->config->strowallet_public_key,$card_api->config->strowallet_url);
+                                @endphp
+
+                                <span class="text--base">{{ getAmount(updateStroWalletCardBalance(auth()->user(),$myCard->card_id,$live_card_data),2) }}{{ get_default_currency_symbol() }}</span>
+                            @endif
+
+
                             @if ($myCard->card_status == 'pending')
                                 <div class="status mt-10">
                                     <small class="badge badge--warning">Pending</small>

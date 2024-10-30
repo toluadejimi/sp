@@ -50,16 +50,21 @@ class StrowalletVirtualController extends Controller
         $cardReloadCharge = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
         $transactions     = Transaction::auth()->virtualCard()->latest()->take(5)->get();
         $cardApi = $this->api;
+        $wallet = UserWallet::where('user_id', Auth::id())->first()->balance;
         return view('user.sections.virtual-card-strowallet.index',compact(
             'page_title',
             'cardApi',
             'myCards',
             'transactions',
             'cardCharge',
+            'wallet',
             'customer_card',
             'cardReloadCharge'
         ));
     }
+
+
+
     /**
      * Method for card details
      * @param $card_id

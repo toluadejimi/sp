@@ -61,7 +61,12 @@ class AddMoneyController extends Controller
             $gateway->where('slug', PaymentGatewayConst::add_money_slug());
             $gateway->where('status', 1);
         })->get();
-        $transactions = Transaction::auth()->addMoney()->latest()->take(5)->get();
+
+
+        $transactions = Transaction::latest()->where('type',"SPRINT-PAY")->take(5)->get();
+
+
+
         return view('user.sections.add-money.index', compact("page_title", "payment_gateways_currencies", "transactions", "va"));
     }
 

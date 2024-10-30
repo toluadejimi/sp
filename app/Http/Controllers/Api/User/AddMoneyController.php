@@ -36,6 +36,7 @@ class AddMoneyController extends Controller
 
     public function addMoneyInformation()
     {
+
         $user = auth()->user();
         $userWallet = UserWallet::where('user_id', $user->id)->get()->map(function ($data) {
             return [

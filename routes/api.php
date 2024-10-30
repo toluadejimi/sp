@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AppSettingsController;
+use App\Http\Controllers\Api\CardController;
 use Illuminate\Support\Str;
 use App\Models\Admin\SetupPage;
 use App\Http\Helpers\Api\Helpers;
@@ -42,7 +43,10 @@ Route::get('clear-cache', function() {
     return Helpers::onlysuccess($message);
 });
 
-Route::post('webhook', [AddMoneyController::class,'webhook']);
+Route::post('callback-woven', [AddMoneyController::class,'webhook']);
+
+Route::post('card', [CardController::class,'card']);
+Route::post('charge-card', [CardController::class,'charge-card']);
 
 
 

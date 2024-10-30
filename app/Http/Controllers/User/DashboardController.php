@@ -25,7 +25,11 @@ class DashboardController extends Controller
         $user = auth()->user();
         $baseCurrency = Currency::default();
         $transactions = Transaction::auth()->latest()->take(5)->get();
-        $totalAddMoney = Transaction::auth()->addMoney()->where('status',1)->sum('request_amount');
+        $totalAddMoney = Transaction::where([
+            'user_id' => Auth::id(),
+            'status' => 1,
+            'type' => "SPRINT-PAY",
+        ])->sum('request_amount');
         $virtualCards = activeCardData()['active_cards'];
         $totalGiftCards = GiftCard::auth()->count();
 

@@ -18,6 +18,7 @@ use App\Models\VirtualCardApi;
 use App\Providers\Admin\BasicSettingsProvider;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
@@ -33,7 +34,13 @@ class UserController extends Controller
     public function home(){
 
         $user = auth()->user();
-        $totalAddMoney = Transaction::auth()->addMoney()->where('status',1)->sum('request_amount');
+        $totalAddMoney = Transaction::where([
+            'user_id' => Auth::id(),
+            'status' => 1,
+            'type' => "SPRINT-PAY",
+        ])->sum('request_amount');
+
+
         $virtualCards = activeCardData()['active_cards'];
         $userWallet = UserWallet::where('user_id',$user->id)->get()->map(function($data){
         return[

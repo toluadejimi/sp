@@ -136,7 +136,7 @@ Route::prefix("user")->name("user.")->group(function(){
     });
      //virtual card strowallet
     Route::middleware('virtual_card_method:strowallet')->group(function(){
-        Route::controller(StrowalletVirtualController::class)->prefix('strowallet-virtual-card')->middleware('kyc.verification.guard')->name('strowallet.virtual.card.')->group(function(){
+        Route::controller(StrowalletVirtualController::class)->prefix('virtual-card')->middleware('kyc.verification.guard')->name('strowallet.virtual.card.')->group(function(){
             Route::get('/','index')->name('index');
             Route::post('create','cardBuy')->name('create');
             Route::post('fund','cardFundConfirm')->name('fund');

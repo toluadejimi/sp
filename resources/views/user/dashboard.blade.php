@@ -32,7 +32,7 @@
                     <div class="dashbord-item">
                         <div class="dashboard-content">
                             <span class="sub-title">{{ __("Total Add Money") }}</span>
-                            <h4 class="title">{{ @$baseCurrency->symbol }}{{ getAmount(@$totalAddMoney,2) }}</h4>
+                            <h4 class="title">{{ @$baseCurrency->symbol }}{{ number_format($totalAddMoney,2) }}</h4>
                         </div>
                         <div class="dashboard-icon">
                             <i class="menu-icon las la-cloud-upload-alt"></i>

@@ -36,6 +36,7 @@ class TransactionController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index($slug = null) {
+
         if($slug != null){
             $transactions = Transaction::auth()->where("type",$this->slugValue($slug))->orderByDesc("id")->paginate(12);
             $page_title = ucwords(remove_speacial_char($slug," ")) . " Log";

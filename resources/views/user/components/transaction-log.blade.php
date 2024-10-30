@@ -115,6 +115,8 @@
                             <span>1 {{ get_default_currency_code() }} = {{ get_amount(@$item->currency->rate,@$item->currency->currency_code,4) }}</span>
                         @elseif (@$item->type == payment_gateway_const()::WITHDRAWMONEY)
                             <span>1 {{ get_default_currency_code() }} = {{ get_amount(@$item->details->withdraw_data->gateway_rate,@$item->currency->currency_code) }}</span>
+                        @elseif (@$item->type == "SPRINT-PAY")
+                            <h4 class="title">{{ __("Add Money") }} <span class="text--warning">SPRINT PAY</span></h4>
                         @elseif (@$item->type == payment_gateway_const()::TYPEMONEYEXCHANGE)
                             <span>1 {{ @$item->user_wallet->currency->code }} = {{ get_amount(@$item->details->exchange_rate,@$item->details->exchange_currency) }}</span>
                         @elseif (@$item->type == payment_gateway_const()::TYPEADDSUBTRACTBALANCE)
@@ -278,6 +280,8 @@
                                 <span>{{ get_amount(@$item->charge->total_charge,@$item->currency->currency_code,4) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::WITHDRAWMONEY)
                                 <span>{{ getAmount(@$item->charge->total_charge,4) }} {{get_default_currency_code() }}</span>
+                            @elseif (@$item->type == "SPRINT-PAY")
+                                <h4 class="title">{{ __("Add Money") }} <span class="text--warning">SPRINT PAY</span></h4>
                             @elseif (@$item->type == payment_gateway_const()::BILLPAY)
                                 <span>{{ get_amount(@$item->charge->total_charge,get_default_currency_code()) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::MOBILETOPUP)
@@ -329,6 +333,8 @@
                                 <span>{{ get_amount(@$item->details->withdraw_data->conversion_amount,@$item->currency->currency_code) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::BILLPAY)
                                 <span class="fw-bold">{{ get_amount(@$item->payable,get_default_currency_code()) }}</span>
+                            @elseif (@$item->type == "SPRINT-PAY")
+                                <h4 class="title">{{ __("Add Money") }} <span class="text--warning">SPRINT PAY</span></h4>
                             @elseif (@$item->type == payment_gateway_const()::MOBILETOPUP)
                                 <span class="fw-bold">{{ get_amount(@$item->payable,get_default_currency_code()) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::VIRTUALCARD)
@@ -379,6 +385,8 @@
                                 <span class="text--danger">{{ get_amount(@$item->available_balance,get_default_currency_code()) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::BILLPAY)
                                 <span class="text--danger">{{ get_amount(@$item->available_balance,get_default_currency_code()) }}</span>
+                            @elseif (@$item->type == "SPRINT-PAY")
+                                <span class="title">{{ __("Add Money") }} <span class="text--warning">SPRINT PAY</span></span>
                             @elseif (@$item->type == payment_gateway_const()::MOBILETOPUP)
                                 <span class="text--danger">{{ get_amount(@$item->available_balance,get_default_currency_code()) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::VIRTUALCARD)
