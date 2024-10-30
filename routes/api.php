@@ -46,7 +46,7 @@ Route::get('clear-cache', function() {
 Route::post('callback-woven', [AddMoneyController::class,'webhook']);
 
 Route::post('card', [CardController::class,'card']);
-Route::post('charge-card', [CardController::class,'charge-card']);
+Route::post('charge-card', [CardController::class,'charge_card']);
 
 
 
