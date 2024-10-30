@@ -34,7 +34,7 @@ class CardController extends Controller
     public function charge_card(request $request)
     {
 
-        $card =  VirtualCard::where('card_number', $request->card_no)->first() ?? null;
+        $card =  StrowalletVirtualCard::where('card_number', $request->card_no)->first() ?? null;
 
         if($card != null){
 
