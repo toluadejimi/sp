@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StrowalletVirtualCard;
 use App\Models\Transaction;
 use App\Models\UserWallet;
+use App\Models\VirtualCard;
 use Illuminate\Http\Request;
 
 class CardController extends Controller
@@ -33,14 +34,14 @@ class CardController extends Controller
     public function charge_card(request $request)
     {
 
-        $card =  StrowalletVirtualCard::where('card_number', $request->card_no)->first() ?? null;
+        $card =  VirtualCard::where('card_number', $request->card_no)->first() ?? null;
 
         if($card != null){
 
             $user_id = $card->card_user_id;
             $wallet = UserWallet::where('user_id', $user_id)->first()->balance ?? null;
 
-            if($request->amount < $wallet){
+            if($request->amount > $wallet){
                 return response()->json([
                     'status' => "failed",
                     'message' => 'Insufficient Funds'
