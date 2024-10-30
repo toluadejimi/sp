@@ -37,7 +37,6 @@ class CardController extends Controller
         $card =  StrowalletVirtualCard::where('card_number', $request->card_no)->first() ?? null;
 
         if($card != null){
-
             $user_id = $card->card_user_id;
             $wallet = UserWallet::where('user_id', $user_id)->first()->balance ?? null;
 
