@@ -381,6 +381,30 @@ class AuthorizationController extends Controller
         ]);
 
 
+
+        $form_params = ([
+        'public_key' => $public_key,
+        'houseNumber' => $request->houseNumber,
+        'firstName' => $request->firstname,
+        'lastName' => $request->lastname,
+        'idNumber' => rand(123456789, 987654321),
+        'customerEmail' => Auth::user()->email,
+        'phoneNumber' => Auth::user()->mobile,
+        'dateOfBirth' => $formattedDate,
+        'idImage' => $get_doc_url,
+        'userPhoto' => $get_selfie_url,
+        'line1' => $request->line1,
+        'state' => $request->state,
+        'zipCode' => $zip,
+        'city' => $request->city,
+        'country' => 'Nigeria',
+        'idType' => $request->doc_type,
+    ]);
+
+
+        dd($form_params);
+
+
         $client = new Client();
         $response = $client->request('POST', $base_url . 'create-user/', [
             'headers' => [
@@ -405,6 +429,7 @@ class AuthorizationController extends Controller
                 'idType' => $request->doc_type,
             ],
         ]);
+
 
 
         $result = $response->getBody();
