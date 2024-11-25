@@ -383,6 +383,28 @@ class AuthorizationController extends Controller
 
 
 
+        $formdata = ([
+        'public_key' => $public_key,
+        'houseNumber' => $request->houseNumber,
+        'firstName' => $request->firstname,
+        'lastName' => $request->lastname,
+        'idNumber' => $request->doc_no,
+        'customerEmail' => Auth::user()->email,
+        'phoneNumber' => Auth::user()->mobile,
+        'dateOfBirth' => $formattedDate,
+        'idImage' => $get_doc_url,
+        'userPhoto' => $get_selfie_url,
+        'line1' => $request->line1,
+        'state' => $request->state,
+        'zipCode' => $zip,
+        'city' => $request->city,
+        'country' => 'Nigeria',
+        'idType' => $request->doc_type,
+
+    ]);
+
+
+
 
 
         $client = new Client();
@@ -417,6 +439,7 @@ class AuthorizationController extends Controller
         $decodedResult = json_decode($result, true);
 
 
+        dd($decodedResult, $formdata);
 
         if (isset($decodedResult['success']) && $decodedResult['success'] == true) {
             $data = [
