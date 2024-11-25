@@ -111,7 +111,7 @@
                                     $live_card_data = card_details($myCard->card_id,$card_api->config->strowallet_public_key,$card_api->config->strowallet_url);
                                 @endphp
 
-                                <span class="text--base">{{ getAmount(updateStroWalletCardBalance(auth()->user(),$myCard->card_id,$live_card_data),2) }}{{ get_default_currency_symbol() }}</span>
+                                <span class="text--base">{{$myCard->currency ?? "NGN"}}{{ getAmount(updateStroWalletCardBalance(auth()->user(),$myCard->card_id,$live_card_data),2) }}</span>
                             @endif
 
 

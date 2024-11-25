@@ -37,6 +37,15 @@
                             <span class="menu-title">{{ __("transfer Money") }}</span>
                         </a>
                     </li>
+
+                    <li class="sidebar-menu-item">
+                        <a href="{{ setRoute('user.transfer.money.vendor') }}">
+                            <i class="menu-icon las la-paper-plane"></i>
+                            <span class="menu-title">{{ "Fund Vendor" }}</span>
+                        </a>
+                    </li>
+
+
                     <li class="sidebar-menu-item">
                         <a href="{{ setRoute('user.withdraw.index') }}">
                             <i class="menu-icon las la-arrow-circle-left"></i>

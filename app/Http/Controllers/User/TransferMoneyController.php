@@ -12,8 +12,10 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
+use App\Models\Vendor;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransferMoneyController extends Controller
@@ -238,5 +240,195 @@ class TransferMoneyController extends Controller
             DB::rollBack();
             throw new Exception(__("Something Went Wrong! Please Try Again"));
         }
+
+
+
+
+
     }
+
+
+    public function check_vendor(Request $request){
+        $databody = array(
+            "key" => $request->email2,
+        );
+
+        $post_data = json_encode($databody);
+
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://web.sprintpay.online/api/check-vendor",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_POSTFIELDS => $post_data,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+            ),
+        ));
+
+        $var = curl_exec($curl);
+        curl_close($curl);
+        $var = json_decode($var);
+
+        $exist['data'] = $var;
+        return response($exist);
+    }
+
+
+
+
+    public function check_username(Request $request){
+
+
+        $url = Vendor::where('key', $request->vendor_id)->first()->verify_url ?? null;
+
+
+        $databody = array(
+            "email" => $request->email,
+        );
+
+        $post_data = json_encode($databody);
+
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "$url",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_POSTFIELDS => $post_data,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+            ),
+        ));
+
+        $var = curl_exec($curl);
+        curl_close($curl);
+        $var = json_decode($var);
+
+        $username['data'] = $var;
+        return response($username);
+    }
+
+
+
+
+    public function pay_vendor(Request $request){
+        $page_title = "Fund Vendor";
+        $transferMoneyCharge = TransactionSetting::where('slug','fund-vendor')->where('status',1)->first();
+        $transactions = Transaction::auth()->transferMoney()->latest()->take(10)->get();
+        return view('user.sections.fund-vendor.index',compact("page_title",'transferMoneyCharge','transactions'));
+    }
+
+
+
+
+    public function vendor_send(Request $request){
+
+
+        $trx = "SprintwalletFund" . random_int(000000, 999999);
+        $request->validate([
+            'amount' => 'required|numeric|gt:0',
+            'email' => 'required|email',
+            'email2' => 'required'
+
+        ]);
+
+        $amount = $request->amount;
+        $user = auth()->user();
+        $userWallet = UserWallet::where('user_id',$user->id)->first();
+        if(!$userWallet){
+            return back()->with(['error' => [__("Sender wallet not found")]]);
+        }
+        if($amount > $userWallet->balance ){
+            return back()->with(['error' => [__('Sorry, insufficient balance')]]);
+        }
+
+        UserWallet::where('user_id', Auth::id())->decrement('balance', $amount);
+
+
+        try{
+
+
+            $databody = array(
+                "amount" => $amount,
+                "key" => $request->email2,
+                "email" => $request->email,
+                "trx" => $request->trx,
+                "action" => "Sprint",
+
+
+            );
+
+            $post_data = json_encode($databody);
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => "https://web.sprintpay.online/api/e-payment",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => $post_data,
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                ),
+            ));
+
+            $var = curl_exec($curl);
+            curl_close($curl);
+            $var = json_decode($var);
+            $status = $var->status ?? null;
+
+            if($status == true){
+
+                DB::beginTransaction();
+                try{
+                    $id = DB::table("transactions")->insertGetId([
+                        'user_id'                       => Auth::id(),
+                        'user_wallet_id'                => $userWallet->id,
+                        'payment_gateway_currency_id'   => null,
+                        'type'                          => PaymentGatewayConst::TYPETRANSFERMONEY,
+                        'trx_id'                        => $trx,
+                        'request_amount'                => $amount,
+                        'payable'                       => $amount,
+                        'available_balance'             => $userWallet->balance,
+                        'remark'                        => "Vendor Funding",
+                        'details'                       => json_encode("data"),
+                        'attribute'                      =>PaymentGatewayConst::RECEIVED,
+                        'status'                        => true,
+                        'created_at'                    => now(),
+                    ]);
+
+
+                    DB::commit();
+                }catch(Exception $e) {
+                    DB::rollBack();
+                }
+
+
+                return redirect()->route("user.transfer.money.index")->with(['success' => [__('Transfer Money successful to your wallet')]]);
+            }
+
+
+        }catch(Exception $e) {
+            return back()->with(['error' => [__("Something Went Wrong! Please Try Again")]]);
+        }
+
+    }
+
+
+
 }

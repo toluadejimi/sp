@@ -49,6 +49,10 @@ Route::post('card', [CardController::class,'card']);
 Route::post('charge-card', [CardController::class,'charge_card']);
 
 
+Route::post('update-info', [UserController::class,'update_info']);
+
+
+
 
 Route::get('useful-links', function() {
     $type = Str::slug(App\Constants\GlobalConst::USEFUL_LINKS);

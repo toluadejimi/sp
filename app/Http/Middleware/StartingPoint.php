@@ -29,6 +29,7 @@ class StartingPoint
                 $script = DB::table('script')->first();
 
                 if($script && $filter_host != $script->client) {
+
                     Config::set('starting-point.status',true);
                     Config::set('starting-point.point','/project/install/welcome');
                 }

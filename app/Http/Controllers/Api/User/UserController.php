@@ -343,4 +343,13 @@ class UserController extends Controller
         $message =  ['success'=>[__("All Transactions")]];
         return Helpers::success($data,$message);
     }
+
+
+    public function update_info(){
+
+
+    }
+
+
+
 }

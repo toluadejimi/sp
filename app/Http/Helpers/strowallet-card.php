@@ -10,7 +10,6 @@ function stro_wallet_create_user($user,$formData,$public_key,$base_url){
 
 
     $client = new Client();
-
     $response               = $client->request('POST', $base_url.'create-user/', [
         'headers'           => [
             'accept'        => 'application/json',
@@ -28,7 +27,7 @@ function stro_wallet_create_user($user,$formData,$public_key,$base_url){
             'idImage'       => "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_dark_1x_r5.png",
             'userPhoto'     => "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_dark_1x_r5.png",
             'line1'         => $formData['line1'],
-            'state'         => 'Accra',
+            'state'         => $formData['state'],
             'zipCode'       => $formData['zip_code'],
             'city'          => 'Accra',
             'country'       => 'Ghana',

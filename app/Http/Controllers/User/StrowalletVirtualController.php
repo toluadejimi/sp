@@ -74,9 +74,6 @@ class StrowalletVirtualController extends Controller
 
 
         $get_type = StrowalletVirtualCard::where('card_id',$card_id)->first() ?? null;
-
-
-
         if($get_type != null && $get_type->card_type == "Universal"){
 
             $page_title = __("Card Details");
@@ -98,7 +95,6 @@ class StrowalletVirtualController extends Controller
 
         if($myCard->card_status == 'pending'){
             $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
-
             if($card_details['status'] == false){
                 return back()->with(['error' => [__("Your Card Is Pending! Please Contact With Admin")]]);
             }
@@ -195,33 +191,44 @@ class StrowalletVirtualController extends Controller
         }
 
 
+        if($request->card_type == "naira"){
+            return back()->with(['error' => [__('Naira Virtual card not available at the moment')]]);
+        }
 
 
         $user = auth()->user();
         if ($user->strowallet_customer == null) {
-            $request->validate([
-                'card_amount'       => 'required|numeric|gt:0',
-              'name_on_card'      => 'required|string|min:4|max:50',
-                'first_name'        => ['required', 'string', 'regex:/^[^0-9\W]+$/'],
-                'last_name'         => ['required', 'string', 'regex:/^[^0-9\W]+$/'],
-                'house_number'      => 'required|string',
-                'customer_email'    => 'required|string',
-                'phone'             => 'required|string',
-                'date_of_birth'     => 'required|string',
-                'line1'             => 'required|string',
-                'zip_code'          => 'required|string',
-            ], [
-                'first_name.regex'  => 'The Frist Name field should only contain letters and cannot start with a number or special character.',
-                'last_name.regex'   => 'The Lasrt Name field should only contain letters and cannot start with a number or special character.',
-            ]);
-        } else {
-            $request->validate([
-                'card_amount'       => 'required|numeric|gt:0',
-              'name_on_card'      => 'required|string|min:4|max:50',
-            ]);
+
+            return redirect('/user/authorize/info ')->with(['error' => [__('We need more information to create your virtual card')]]);
+
+
+//            $request->validate([
+//                'card_amount'       => 'required|numeric|gt:0',
+//                'name_on_card'      => 'required|string|min:4|max:50',
+//                'first_name'        => ['required', 'string', 'regex:/^[^0-9\W]+$/'],
+//                'last_name'         => ['required', 'string', 'regex:/^[^0-9\W]+$/'],
+//                'house_number'      => 'required|string',
+//                'customer_email'    => 'required|string',
+//                'phone'             => 'required|string',
+//                'date_of_birth'     => 'required|string',
+//                'line1'             => 'required|string',
+//                'zip_code'          => 'required|string',
+//            ], [
+//                'first_name.regex'  => 'The Frist Name field should only contain letters and cannot start with a number or special character.',
+//                'last_name.regex'   => 'The Lasrt Name field should only contain letters and cannot start with a number or special character.',
+//            ]);
+//        } else {
+//            $request->validate([
+//                'card_amount'       => 'required|numeric|gt:0',
+//                'name_on_card'      => 'required|string|min:4|max:50',
+//            ]);
+//        }
+//
+//        $formData   = $request->all();
+
         }
 
-        $formData   = $request->all();
+
 
         $amount = $request->card_amount;
         $basic_setting = BasicSettings::first();

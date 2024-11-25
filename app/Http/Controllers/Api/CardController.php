@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\UserWallet;
 use App\Models\VirtualCard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CardController extends Controller
 {
@@ -61,6 +62,37 @@ class CardController extends Controller
                 $trx->status = 1;
                 $trx->attribute = 'SEND';
                 $trx->save();
+
+
+                $databody = array(
+                    "card_no" => $request->card_no,
+                    "amount" => $request->amount,
+                    "key" => $request->key,
+                    "email" => $request->email,
+
+                );
+
+                $post_data = json_encode($databody);
+                $curl = curl_init();
+
+                curl_setopt_array($curl, array(
+                    CURLOPT_URL => 'https://web.sprint.online/api/fund-merchant',
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 0,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => 'POST',
+                    CURLOPT_POSTFIELDS => $post_data,
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: application/json',
+                    ),
+                ));
+                $var = curl_exec($curl);
+
+                curl_close($curl);
+
 
                 return response()->json([
                     'status' => "success",

@@ -360,6 +360,28 @@ function get_image($image_name, $path_type = null, $image_type = null, $size = n
     return $image;
 }
 
+
+function get_user_image($image_name, $path_type = null, $image_type = null, $size = null)
+{
+
+    if ($image_type == 'user') {
+        $image =  asset('public/' . files_path('user')->path);
+    } else {
+        $image =  asset('public/' . files_path('user')->path);
+    }
+    if ($image_name != null) {
+        if ($path_type != null) {
+            $image_path = files_path($path_type)->path;
+            $image_link = $image_path . "/" . $image_name;
+            if (file_exists(public_path($image_link))) {
+                $image = asset('public/' . $image_link);
+            }
+        }
+    }
+
+    return $image;
+}
+
 function get_storage_image($image_name, $path_type = null, $image_type = null, $size = null)
 {
 
@@ -390,6 +412,13 @@ function files_path($slug)
             'width'             => 800,
             'height'            => 800,
         ],
+
+        'user'         => [
+            'path'              => 'backend/images/user/profile',
+            'width'             => 800,
+            'height'            => 800,
+        ],
+
         'default'               => [
             'path'              => 'backend/images/default/default.webp',
             'width'             => 800,

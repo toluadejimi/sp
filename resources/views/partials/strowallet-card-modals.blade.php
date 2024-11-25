@@ -65,9 +65,9 @@
                                     <div class="form-group">
                                         <label>{{__("Choose Card Type")}}<span>*</span></label>
                                         <select  class="form--control"  name="card_type" required>
-                                            <option value="universal"> Sprint Card</option>
-                                            <option value="naira"> Naira Card</option>
-                                            <option value="usd"> USD Card</option>
+                                            <option value=" "> Select virtual card type</option>
+                                            <option value="usd"> USD Virtual Card</option>
+                                            <option value="naira"> Naira Virtual Card</option>
                                         </select>
 
                                     </div>

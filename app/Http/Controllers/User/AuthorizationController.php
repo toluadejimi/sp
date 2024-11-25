@@ -8,10 +8,12 @@ use App\Models\Admin\SetupKyc;
 use App\Models\User;
 use App\Models\UserAuthorization;
 use App\Models\VirtualAccount;
+use App\Models\VirtualCardApi;
 use App\Notifications\User\Auth\SendAuthorizationCode;
 use App\Providers\Admin\BasicSettingsProvider;
 use App\Traits\ControlDynamicInputFields;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +24,17 @@ use Illuminate\Validation\ValidationException;
 class AuthorizationController extends Controller
 {
     use ControlDynamicInputFields;
+
+    protected $api;
+    protected $card_limit;
+
+    public function __construct()
+    {
+        $cardApi = VirtualCardApi::first();
+        $this->api = $cardApi;
+        $this->card_limit = $cardApi->card_limit;
+
+    }
 
     /**
      * Display a listing of the resource.
@@ -178,7 +191,7 @@ class AuthorizationController extends Controller
             'firstname' => $request->firstname,
             'middlename' => $request->middlename,
             'lastname' => $request->lastname,
-            'full_mobile' => "234".$request->mobile,
+            'full_mobile' => "234" . $request->mobile,
             'mobile' => $request->mobile,
 
 
@@ -205,7 +218,6 @@ class AuthorizationController extends Controller
         ]);
 
 
-
         $first_name = Auth::user()->firstname;
         $last_name = Auth::user()->lastname;
         $middle_name = Auth::user()->middlename;
@@ -216,12 +228,9 @@ class AuthorizationController extends Controller
         $amount = $request->amount;
 
 
-
-
-
         $key = env('WOVENKEY');
         $databody = array(
-            "customer_reference" => $last_name . "_" . $first_name.date('his'),
+            "customer_reference" => $last_name . "_" . $first_name . date('his'),
             "name" => $first_name . " $middle_name " . $last_name,
             "email" => $email,
             "mobile_number" => $phone,
@@ -230,8 +239,6 @@ class AuthorizationController extends Controller
             "callback_url" => url('') . "/api/callback-woven",
             "collection_bank" => "000017"//"060001" //"000017",
         );
-
-
 
 
         $post_data = json_encode($databody);
@@ -258,7 +265,7 @@ class AuthorizationController extends Controller
         $status = $var->status ?? null;
 
 
-        if($status == "success"){
+        if ($status == "success") {
             $va = new VirtualAccount();
             $va->user_id = Auth::id();
             $va->bank = $var->data->bank_name;
@@ -279,8 +286,148 @@ class AuthorizationController extends Controller
         return redirect()->route("user.authorize.kyc")->with(['error' => [__("$var->message")]]);
 
 
+    }
 
 
+    public function showinfoFrom()
+    {
+        $user = auth()->user();
+        $page_title = __("User Information");
+        $user_kyc = SetupKyc::userKyc()->first();
+        if (!$user_kyc) return back();
+        $kyc_data = $user_kyc->fields;
+        $kyc_fields = [];
+        if ($kyc_data) {
+            $kyc_fields = array_reverse($kyc_data);
+        }
+        return view('user.sections.user-info', compact("page_title", "kyc_fields", "user_kyc"));
+    }
+
+
+    public function updateuserinfo(request $request)
+    {
+
+        $public_key = $this->api->config->strowallet_public_key;
+        $base_url = $this->api->config->strowallet_url;
+
+
+        $date = $request->dob;
+        $timestamp = strtotime($date);
+        $formattedDate = date('m/d/Y', $timestamp);
+
+
+        $request->validate([
+            'doc_image' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'selfie_image' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+
+        ]);
+
+
+        //doc_image
+        if ($request->hasFile('selfie_image')) {
+
+
+
+            $path = $request->file('selfie_image')->store('documents', 'public');
+
+            $destinationPath = public_path('backend/images/user/selfie');
+            $image_name = uniqid() . '_' . $request->file('doc_image')->getClientOriginalName();
+
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $request->file('selfie_image')->move($destinationPath, $image_name);
+            $im = get_user_image($image_name);
+            $get_selfie_url = "$im/$image_name";
+            User::where('id', Auth::id())->update(['selfie_image' => $get_selfie_url]);
+
+        }
+
+        if ($request->hasFile('doc_image')) {
+
+            $path = $request->file('doc_image')->store('documents', 'public');
+
+            $destinationPath = public_path('backend/images/user/document');
+            $image_name = uniqid() . '_' . $request->file('doc_image')->getClientOriginalName();
+
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $request->file('doc_image')->move($destinationPath, $image_name);
+
+
+            $im = get_user_image($image_name);
+
+            $get_doc_url = "$im/$image_name";
+            User::where('id', Auth::id())->update(['doc_image' => $get_doc_url]);
+
+        }
+
+
+        $zip = rand(123456, 987654);
+
+        User::where('id', Auth::id())->update([
+            'dob' => $formattedDate,
+            'houseNumber' => $request->houseNumber,
+            'line1' => $request->line1,
+            'zip_code' => $zip,
+            'doc_type' => $request->doc_type,
+            'doc_image' => $get_doc_url,
+            'selfie_image' => $get_selfie_url,
+            'state' => $request->state,
+            'city' => $request->city,
+
+
+        ]);
+
+
+        $client = new Client();
+        $response = $client->request('POST', $base_url . 'create-user/', [
+            'headers' => [
+                'accept' => 'application/json',
+            ],
+            'form_params' => [
+                'public_key' => $public_key,
+                'houseNumber' => $request->houseNumber,
+                'firstName' => $request->firstname,
+                'lastName' => $request->lastname,
+                'idNumber' => rand(123456789, 987654321),
+                'customerEmail' => Auth::user()->email,
+                'phoneNumber' => Auth::user()->mobile,
+                'dateOfBirth' => $formattedDate,
+                'idImage' => $get_doc_url,
+                'userPhoto' => $get_selfie_url,
+                'line1' => $request->line1,
+                'state' => $request->state,
+                'zipCode' => $zip,
+                'city' => $request->city,
+                'country' => 'Nigeria',
+                'idType' => $request->doc_type,
+            ],
+        ]);
+
+
+        $result = $response->getBody();
+        $decodedResult = json_decode($result, true);
+
+
+        dd($decodedResult);
+
+        if (isset($decodedResult['success']) && $decodedResult['success'] == true) {
+            $data = [
+                'status' => true,
+                'message' => "Create Customer Successfully.",
+                'data' => $decodedResult['response'],
+            ];
+        } else {
+            $data = [
+                'status' => false,
+                'message' => $decodedResult['message'] ?? 'Something is wrong! Contact With Admin',
+                'data' => null,
+            ];
+        }
+
+        return $data;
     }
 
 

@@ -35,7 +35,6 @@ Route::controller(SiteController::class)->group(function(){
     Route::get('cookie/decline','cookieDecline')->name('cookie.decline');
 });
 
-//for sslcommerz callback urls(web)
 Route::controller(AddMoneyController::class)->prefix("add-money")->name("add.money.")->group(function(){
     //sslcommerz
     Route::post('sslcommerz/success','sllCommerzSuccess')->name('ssl.success');
@@ -43,7 +42,6 @@ Route::controller(AddMoneyController::class)->prefix("add-money")->name("add.mon
     Route::post('sslcommerz/cancel','sllCommerzCancel')->name('ssl.cancel');
     Route::post("/callback/response/{gateway}",'callback')->name('payment.callback')->withoutMiddleware(['web','auth','verification.guard','user.google.two.factor']);
 });
-//for sslcommerz callback urls(api)
 Route::controller(UserAddMoneyController::class)->prefix("api-add-money")->name("api.add.money.")->group(function(){
     //sslcommerz
     Route::post('sslcommerz/success','sllCommerzSuccess')->name('ssl.success');

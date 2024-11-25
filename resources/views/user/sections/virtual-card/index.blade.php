@@ -92,7 +92,7 @@
                         </div>
                         <div class="card-balance">
                             <h2 class="title">{{__("Card Balance")}}</h2>
-                            <span class="text--base">{{ getAmount(@$myCard->amount,2) }}{{ get_default_currency_symbol() }}</span>
+                            <span class="text--base">{{ @$myCard->currency ?? "NGN" }} {{ getAmount(@$myCard->amount,2) }}</span>
                             <div class="card-content d-flex justify-content-center mt-3">
                                 <div class="card-details">
                                     <a href="{{ setRoute('user.virtual.card.details',$myCard->card_id) }}">

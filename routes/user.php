@@ -37,18 +37,30 @@ Route::prefix("user")->name("user.")->group(function(){
 
 
 
-
     });
     //Transfer  Money
     Route::controller(TransferMoneyController::class)->prefix('transfer-money')->name('transfer.money.')->middleware('kyc.verification.guard')->group(function(){
         Route::get('/','index')->name('index');
         Route::post('confirmed','confirmed')->name('confirmed');
+        Route::post('vendorsend','vendor_send')->name('vendorsend');
+
+
         Route::post('user/exist','checkUser')->name('check.exist');
+        Route::post('vendor/exist','check_vendor')->name('vendor.exist');
+        Route::post('user-vendor/exist','check_user_vendor')->name('check.user.vendor.exist');
+        Route::post('user-vendor/checkusername','check_username')->name('vendor.checkusername');
+
+
+        Route::get('fund-vendor','pay_vendor')->name('vendor');
+
+
     });
     //add money
     Route::controller(AddMoneyController::class)->prefix("add-money")->name("add.money.")->group(function(){
         Route::get('/','index')->name("index");
         Route::post('submit','submit')->name('submit');
+
+
         //paypal
         Route::get('success/response/paypal/{gateway}','success')->name('payment.success');
         Route::get("cancel/response/paypal/{gateway}",'cancel')->name('payment.cancel');
@@ -170,8 +182,10 @@ Route::prefix("user")->name("user.")->group(function(){
     //kyc
     Route::controller(AuthorizationController::class)->prefix("authorize")->name('authorize.')->group(function(){
         Route::get('kyc','showKycFrom')->name('kyc');
+        Route::get('info','showinfoFrom')->name('info');
         Route::post('kyc/submit','kycSubmit')->name('kyc.submit');
         Route::post('update-user-info','updateinfo')->name('updateinfo.submit');
+        Route::post('update-info','updateuserinfo')->name('updateuserinfo.submit');
         Route::post('update-verify-info','updateverifyinfo')->name('verify.submit');
 
 
