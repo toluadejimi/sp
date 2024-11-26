@@ -93,7 +93,7 @@
         <div class="email-templates-box">
             <div class="email-templates-content">
                 <p class="hello">Hello, {{$first_name}}</p>
-                <p>We want to inform you that NGN {{$number_format($amount, 2)}} has landed in your wallet</p>
+                <p>We want to inform you that NGN {{number_format($amount, 2)}} has landed in your wallet</p>
 
                 <p>Thanks for using sprint pay</p>
                 <p class="thanks">Thanks!</p>
