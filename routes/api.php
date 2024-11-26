@@ -43,7 +43,7 @@ Route::get('clear-cache', function() {
     return Helpers::onlysuccess($message);
 });
 
-Route::post('callback-woven', [AddMoneyController::class,'webhook']);
+Route::any('callback-woven', [AddMoneyController::class,'webhook']);
 
 Route::post('card', [CardController::class,'card']);
 Route::post('charge-card', [CardController::class,'charge_card']);
