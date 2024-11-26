@@ -88,7 +88,7 @@
 <div class="email-templates-section">
     <div class="email-templates-wrapper">
         <div class="email-templates-logo">
-            <img src="{{ $message->embed($logo) }}" alt="logo">
+            <img src="https://sprintpay.online/public/backend/images/web-settings/image-assets/seeder/logo-white.png" alt="logo">
         </div>
         <div class="email-templates-box">
             <div class="email-templates-content">
@@ -97,7 +97,7 @@
 
                 <p>Thanks for using sprint pay</p>
                 <p class="thanks">Thanks!</p>
-                <span><a href="{{ $site_url ?? "" }}">{{ $site_name ?? "" }}</a> Support Team</span>
+                <span><a href="https://sprintpay.online/">SPRINTPAY</a> Support Team</span>
             </div>
         </div>
     </div>
