@@ -919,7 +919,7 @@ class AddMoneyController extends Controller
     {
 
         $message = json_encode($request->all());
-        send_notification($message);
+        $this->send_notification($message);
 
 
         try {
@@ -990,6 +990,10 @@ class AddMoneyController extends Controller
         }
 
         return $this->cancelGlobal($request, $gateway);
+    }
+
+    private function send_notification(bool|string $message)
+    {
     }
 
 
