@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Helpers\Api\Helpers;
 use App\Http\Helpers\PaymentGateway as PaymentGatewayHelper;
 use App\Http\Helpers\PaymentGatewayApi;
+use App\Mail\Fundwallet;
+use App\Mail\UserRegister;
 use App\Models\Admin\CryptoTransaction;
 use App\Models\Admin\Currency;
 use App\Models\Admin\PaymentGateway;
@@ -16,6 +18,7 @@ use App\Models\Setting;
 use App\Models\TemporaryData;
 use App\Models\Transaction;
 use App\Models\Transfertransaction;
+use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Models\VirtualAccount;
@@ -27,6 +30,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use KingFlamez\Rave\Facades\Rave as Flutterwave;
 
@@ -991,6 +995,7 @@ class AddMoneyController extends Controller
             UserWallet::where('user_id', $acct)->increment('balance', $p_amount);
             $user_wallet_id =  UserWallet::where('user_id', $acct)->first()->id;
             $available_balance =UserWallet::where('user_id', $acct)->first()->balance;
+            $user = User::where('id', $acct)->first();
 
 
             $trx = new Transaction();
@@ -1007,16 +1012,29 @@ class AddMoneyController extends Controller
             $trx->save();
 
 
+            $data['email'] = $user->email ?? "toluadejimi@gmail.com";
+            $data['first_name'] = $user->first_name ?? "Tolu";
+            $data['amount'] = $p_amount ?? 0;
+
+
+
+            Mail::to($data['email'])->send(new Fundwallet($data['first_name'], $data['amount']));
+
+
 
             return response()->json([
                     'status' => true,
                     'message' => "Transaction successful"
-                ]);
+            ]);
 
 
                 } catch (Exception $e) {
             $message = ['error' => [$e->getMessage()]];
             return Helpers::error($message);
+
+
+
+
         }
 
         return $this->cancelGlobal($request, $gateway);

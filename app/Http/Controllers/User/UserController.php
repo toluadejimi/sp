@@ -175,7 +175,7 @@ class UserController extends Controller
                     Mail::to($data['email'])->send(new UserRegister($data['first_name'], base64_encode($data['email'])));
                     return redirect()->route('user.login')->with(['success' => ['Please check your email to activate your account.']]);
                 } else {
-                    return redirect()->route('user.login')->with(['success' => ['Registration successfull.']]);
+                    return redirect()->route('user.login')->with(['success' => ['Registration successfully.']]);
                 }
             } catch (Exception $e) {
                 info($e);
