@@ -2,8 +2,10 @@
 
 use App\Constants\GlobalConst;
 use App\Models\StrowalletVirtualCard;
+use App\Models\UserWallet;
 use GuzzleHttp\Client;
 use App\Models\VirtualCardApi;
+use Illuminate\Support\Facades\Auth;
 
 
 function stro_wallet_create_user($user,$formData,$public_key,$base_url){
@@ -55,22 +57,21 @@ function stro_wallet_create_user($user,$formData,$public_key,$base_url){
     return $data;
 
 }
-// create virtual card for strowallet
-function create_strowallet_virtual_card($user,$cardAmount,$customer,$public_key,$base_url,$formData){
+
+function create_strowallet_virtual_card($nameoncard,$cardAmount,$customerEmail,$public_key,$base_url, $payable){
     $method = VirtualCardApi::first();
     $mode = $method->config->strowallet_mode??GlobalConst::SANDBOX;
     $data = [
-        'name_on_card' => $formData['name_on_card'] ?? $user->username,
-        'card_type' => $customer->card_brand,
+        'name_on_card' => $nameoncard,
+        'card_type' => 'visa',
         'public_key' => $public_key,
         'amount' => $cardAmount,
-        'customerEmail' => $customer->customerEmail,
+        'customerEmail' => $customerEmail,
     ];
 
     if ($mode === GlobalConst::SANDBOX) {
         $data['mode'] = "sandbox";
     }
-    $data['developer_code'] = 'appdevsx';
 
     $curl = curl_init();
 
@@ -95,6 +96,9 @@ function create_strowallet_virtual_card($user,$cardAmount,$customer,$public_key,
 
 
     if(isset($result['success']) && $result['success'] == true ){
+
+        UserWallet::where('user_id', Auth::id())->decrement('balance', $payable);
+
         $data =[
             'status'        => true,
             'message'       => "Create Card Successfully.",

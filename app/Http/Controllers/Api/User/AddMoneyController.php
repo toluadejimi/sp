@@ -917,6 +917,11 @@ class AddMoneyController extends Controller
 
     public function webhook(Request $request)
     {
+
+        $message = json_encode($request->all());
+        send_notification($message);
+
+
         try {
 
             $acc_no = $request->nuban;

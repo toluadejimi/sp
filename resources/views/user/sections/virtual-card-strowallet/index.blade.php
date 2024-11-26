@@ -202,7 +202,17 @@
                 <h4 class="modal-title">{{__("Fund Card")}}</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="las la-times"></i></button>
             </div>
+
+
+
+
             <div class="modal-body">
+
+                <div class="d-flex justify-content-center my-3">
+                    <h3 class="d-block mt-3  text--base fw-bold balance-show">{{ __("Balance") }} {{ get_default_currency_code() }} {{ authWalletBalance() }}</h3>
+                </div>
+
+
                     <form class="card-form row g-4" action="{{ route('user.strowallet.virtual.card.fund') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id">
@@ -210,29 +220,43 @@
                         <div class="row">
                             <div class="form-group">
                                 <label>{{__("Fund Amount")}}<span>*</span></label>
-                                <input type="number" class="form--control" required placeholder="{{ __("Enter Amount") }}" name="fund_amount" value="{{ old("fund_amount") }}">
-                                <div class="currency">
-                                    <p>{{ get_default_currency_code() }}</p>
+                                <input type="number" class="form--control" id="card_amount" required placeholder="{{ __("Enter Amount") }}" name="fund_amount" value="{{ old("fund_amount") }}">
+{{--                                <div class="currency">--}}
+{{--                                    <p>{{ get_default_currency_code() }}</p>--}}
+{{--                                 --}}
+{{--                                </div>--}}
+
+
+                                <input type="hidden" name="payable_total" id="payable_total" value="">
+                                <input type="hidden" name="payable_total_usd" id="payable_total_usd" value="">
+
+
+
+                                <div class="d-flex justify-content-center my-3">
+                                    <h4 class="mt-3  text--base fw-bold  text-capitalize">&bull; {{__("Card creation fee (1.99% + $1.99)")}} </h4>
                                 </div>
-                               <div class="d-flex justify-content-between">
-                                <code class="d-block mt-3  text--base fw-bold balance-show fund-limit-show">--</code>
-                                <code class="d-block mt-3  text--base fw-bold balance-show">{{ __(" Balance: ") }} {{ authWalletBalance() }} {{ get_default_currency_code() }}</code>
-                               </div>
+
                             </div>
                         </div>
                     </div>
                     <div class="col-12">
                         <div class="ps-4">
+
                             <div class="d-flex justify-content-between">
-                                <h3 class="fs-6 fw-lighter py-1 text-capitalize">&bull; {{ __("Total Charge") }} :
+                                <h3 class="fs-6 fw-lighter py-1 text-capitalize">&bull; {{__("Total to Pay")}} :
                                 </h3>
-                                <h3 class="fs-6 fw-lighter py-1 text-capitalize fund-fees-show">--</h3>
+                                <h3 class="fs-6 fw-lighter py-1 text-capitalize payable-total">--</h3>
+
                             </div>
+
                             <div class="d-flex justify-content-between">
-                                <h3 class="fs-6 fw-lighter py-1 text-capitalize">&bull; {{__("Total Pay")}} :
+                                <h3 class="fs-6 fw-lighter py-1 text-capitalize">&bull; {{__("Amount to get in USD")}} :
                                 </h3>
-                                <h3 class="fs-6 fw-lighter py-1 text-capitalize fund-payable-total">--</h3>
+                                <h3 class="fs-6 fw-lighter py-1 text-capitalize payable-total-usd">--</h3>
                             </div>
+
+
+
 
                         </div>
                     </div>
@@ -301,11 +325,11 @@
 
                 var currencyCode = defualCurrency;
                 var currencyRate = defualCurrencyRate;
-                var currencyMinAmount ="{{getAmount($cardReloadCharge->min_limit)}}";
-                var currencyMaxAmount = "{{getAmount($cardReloadCharge->max_limit)}}";
-                var currencyFixedCharge = "{{getAmount($cardReloadCharge->fixed_charge)}}";
-                var currencyPercentCharge = "{{getAmount($cardReloadCharge->percent_charge)}}";
-
+                var currencyMinAmount ="{{getAmount($cardCharge->min_limit)}}";
+                var currencyMaxAmount = "{{getAmount($cardCharge->max_limit)}}";
+                var currencyFixedCharge = "{{getAmount($cardCharge->fixed_charge)}}";
+                var currencyPercentCharge = "{{getAmount($cardCharge->percent_charge)}}";
+                var usd_rate = "{{$usd_rate ?? 0}}";
 
                 return {
                     currencyCode:currencyCode,
@@ -314,9 +338,9 @@
                     currencyMaxAmount:currencyMaxAmount,
                     currencyFixedCharge:currencyFixedCharge,
                     currencyPercentCharge:currencyPercentCharge,
-
-
+                    usd_rate:usd_rate,
                 };
+
             }
             function feesCalculation() {
                 var currencyCode = acceptVar().currencyCode;
@@ -354,26 +378,51 @@
                 $(".fund-fees-show").html( parseFloat(charges.fixed).toFixed(2) + " " + currencyCode + " + " + parseFloat(charges.percent).toFixed(2) + "% = " + parseFloat(charges.total).toFixed(2) + " " + currencyCode);
             }
             function getPreview() {
-                    var senderAmount = $("input[name=fund_amount]").val();
-                    var charges = feesCalculation();
-                    var sender_currency = acceptVar().currencyCode;
-                    var sender_currency_rate = acceptVar().currencyRate;
-
-                    senderAmount == "" ? senderAmount = 0 : senderAmount = senderAmount;
-                    // Sending Amount
+                var senderAmount = $("#card_amount").val();
+                var usd_rate = "{{$usd_rate ?? 0}}";
+                console.log(senderAmount);
+                console.log(usd_rate);
 
 
-                        // Fees
-                    var charges = feesCalculation();
+                var charges = feesCalculation();
+                var total_charge = 0;
+                if(senderAmount == 0){
+                    total_charge = 0;
+                }else{
+                    total_charge = charges.total;
+                }
+                $('.fees').html("Total Charge: " + total_charge + " " );
 
-                    var totalPay = parseFloat(senderAmount) * parseFloat(sender_currency_rate)
-                    var pay_in_total = 0;
-                    if(senderAmount == 0 ||  senderAmount == ''){
-                        pay_in_total = 0;
-                    }else{
-                        pay_in_total =  parseFloat(totalPay) + parseFloat(charges.total);
-                    }
-                    $('.fund-payable-total').html( pay_in_total + " " + sender_currency);
+
+                var ngn_usd_amount = parseFloat(senderAmount) / parseFloat(usd_rate);
+
+                var amount_to_pay_ngn = parseFloat(senderAmount);
+                var total_ngn_usd_fee = parseFloat(amount_to_pay_ngn) * 0.02 + parseFloat(usd_rate) * 2;
+
+
+
+
+                var pay_in_total = 0;
+                if(senderAmount == 0 ||  senderAmount == ''){
+                    pay_in_total = 0;
+                }else{
+                    pay_in_total =  parseFloat(amount_to_pay_ngn) + parseFloat(total_ngn_usd_fee) ;
+                    pay_in_total = pay_in_total.toFixed(2);
+
+
+                }
+                $('.payable-total').html( "NGN" + " " + pay_in_total);
+
+                var pay_in_total_usd =  parseFloat(amount_to_pay_ngn) / parseFloat(usd_rate);
+                pay_in_total_usd = pay_in_total_usd.toFixed(2);
+
+                $('.payable-total-usd').html( pay_in_total_usd + " " + "USD");
+
+
+                $('#payable_total').val(pay_in_total);
+                $('#payable_total_usd').val(pay_in_total_usd);
+
+
 
             }
             function enterLimit(){

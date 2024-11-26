@@ -50,6 +50,7 @@ class StrowalletVirtualController extends Controller
         $cardReloadCharge = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
         $transactions     = Transaction::auth()->virtualCard()->latest()->take(5)->get();
         $cardApi = $this->api;
+        $usd_rate = BasicSettings::where('id', 1)->first()->usd_amount;
         $wallet = UserWallet::where('user_id', Auth::id())->first()->balance;
         return view('user.sections.virtual-card-strowallet.index',compact(
             'page_title',
@@ -59,7 +60,8 @@ class StrowalletVirtualController extends Controller
             'cardCharge',
             'wallet',
             'customer_card',
-            'cardReloadCharge'
+            'cardReloadCharge',
+            'usd_rate'
         ));
     }
 
@@ -119,6 +121,8 @@ class StrowalletVirtualController extends Controller
      * Method for strowallet card buy
      */
     public function cardBuy(Request $request){
+
+
 
         if($request->card_type == "universal"){
 
@@ -196,38 +200,22 @@ class StrowalletVirtualController extends Controller
         }
 
 
+
+
+
         $user = auth()->user();
-        if ($user->strowallet_customer == null) {
-
+        if ($user->strowallet_id == null) {
             return redirect('/user/authorize/info ')->with(['error' => [__('We need more information to create your virtual card')]]);
-
-
-//            $request->validate([
-//                'card_amount'       => 'required|numeric|gt:0',
-//                'name_on_card'      => 'required|string|min:4|max:50',
-//                'first_name'        => ['required', 'string', 'regex:/^[^0-9\W]+$/'],
-//                'last_name'         => ['required', 'string', 'regex:/^[^0-9\W]+$/'],
-//                'house_number'      => 'required|string',
-//                'customer_email'    => 'required|string',
-//                'phone'             => 'required|string',
-//                'date_of_birth'     => 'required|string',
-//                'line1'             => 'required|string',
-//                'zip_code'          => 'required|string',
-//            ], [
-//                'first_name.regex'  => 'The Frist Name field should only contain letters and cannot start with a number or special character.',
-//                'last_name.regex'   => 'The Lasrt Name field should only contain letters and cannot start with a number or special character.',
-//            ]);
-//        } else {
-//            $request->validate([
-//                'card_amount'       => 'required|numeric|gt:0',
-//                'name_on_card'      => 'required|string|min:4|max:50',
-//            ]);
-//        }
-//
-//        $formData   = $request->all();
-
         }
 
+
+
+        $id = Auth::user()->strowallet_id;
+        $ck_status = get_customer($id);
+
+        if($ck_status != 2) {
+            return back()->with(['error' => [__('Account still under review, please wait')]]);
+        }
 
 
         $amount = $request->card_amount;
@@ -251,53 +239,38 @@ class StrowalletVirtualController extends Controller
         $fixedCharge = $cardCharge->fixed_charge *  $rate;
         $percent_charge = ($amount / 100) * $cardCharge->percent_charge;
         $total_charge = $fixedCharge + $percent_charge;
-        $payable = $total_charge + $amount;
+        $payable = $request->payable_total;
+
         if($payable > $wallet->balance ){
             return back()->with(['error' => [__('Sorry, insufficient balance')]]);
         }
-        if($user->strowallet_customer == null){
-            $createCustomer     = stro_wallet_create_user($user,$formData,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
 
-            if( $createCustomer['status'] == false){
-                return back()->with(['error' => [__("Customer doesn't created properly,Contact with owner")]]);
-            }
-            $user->strowallet_customer =   (object)$createCustomer['data'];
-            $user->save();
-            $customer = $user->strowallet_customer;
 
-        }else{
-            $customer = $user->strowallet_customer;
-        }
-
-        $customer_email = $user->strowallet_customer->customerEmail??false;
-        if($customer_email === false){
-            $customer_card  = 0;
-        }else{
-            $customer_card  = StrowalletVirtualCard::where('customer_email',$customer_email)->count();
-        }
-
-        if($customer_card >= $this->card_limit){
-            return back()->with(['error' => [__("Sorry! You can not create more than")." ".$this->card_limit ." ".__("card using the same email address.")]]);
-        }
 
         // for live code
-        $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url,$formData);
+        $nameoncard = $request->name_on_card;
+        $customerEmail = Auth::user()->email;
+        $created_card = create_strowallet_virtual_card($nameoncard,$request->payable_total_usd,$customerEmail,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url, $payable);
+
+        if($created_card['status'] == false && $created_card['message'] = "Insufficient balance in your wallet"){
+            return back()->with(['error' => [__('Error 101. Please Contact With Administration.')]]);
+        };
+
         if($created_card['status'] == false){
             return back()->with(['error' => [$created_card['message'] .' ,'.__('Please Contact With Administration.')]]);
         }
-
         $strowallet_card                            = new StrowalletVirtualCard();
         $strowallet_card->user_id                   = $user->id;
         $strowallet_card->name_on_card              = $created_card['data']['name_on_card'];
         $strowallet_card->card_id                   = $created_card['data']['card_id'];
         $strowallet_card->card_created_date         = $created_card['data']['card_created_date'];
         $strowallet_card->card_type                 = $created_card['data']['card_type'];
-        $strowallet_card->card_brand                = $customer->card_brand;
+        $strowallet_card->card_brand                = "visa";
         $strowallet_card->card_user_id              = $created_card['data']['card_user_id'];
         $strowallet_card->reference                 = $created_card['data']['reference'];
         $strowallet_card->card_status               = $created_card['data']['card_status'];
         $strowallet_card->customer_id               = $created_card['data']['customer_id'];
-        $strowallet_card->customer_email            = $customer->customerEmail;
+        $strowallet_card->customer_email            = $customerEmail;
         $strowallet_card->balance                   = $amount;
         $strowallet_card->save();
 
@@ -474,6 +447,8 @@ class StrowalletVirtualController extends Controller
      * Card Fund
      */
     public function cardFundConfirm(Request $request){
+
+
         $request->validate([
             'id' => 'required|integer',
             'fund_amount' => 'required|numeric|gt:0',
@@ -498,7 +473,7 @@ class StrowalletVirtualController extends Controller
         $fixedCharge = $cardCharge->fixed_charge *  $rate;
         $percent_charge = ($amount / 100) * $cardCharge->percent_charge;
         $total_charge = $fixedCharge + $percent_charge;
-        $payable = $total_charge + $amount;
+        $payable = $request->payable_total;
         if($payable > $wallet->balance ){
             return back()->with(['error' => [__('Sorry, insufficient balance')]]);
         }
@@ -508,7 +483,7 @@ class StrowalletVirtualController extends Controller
         $mode           = $this->api->config->strowallet_mode??GlobalConst::SANDBOX;
         $form_params    = [
             'card_id'       => $myCard->card_id,
-            'amount'        => $amount,
+            'amount'        => $request->payable_total_usd,
             'public_key'    => $public_key
         ];
         if ($mode === GlobalConst::SANDBOX) {

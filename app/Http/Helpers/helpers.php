@@ -4,22 +4,13 @@ use App\Constants\AdminRoleConst;
 use App\Constants\ExtensionConst;
 use App\Constants\GlobalConst;
 use App\Constants\LanguageConst;
-use App\Models\Admin\AdminHasRole;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\File;
-use Illuminate\Validation\ValidationException;
-use Intervention\Image\Facades\Image;
-use Buglinjo\LaravelWebp\Facades\Webp;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Admin\AdminNotification;
 use App\Constants\NotificationConst;
 use App\Constants\PaymentGatewayConst;
 use App\Constants\SupportTicketConst;
 use App\Http\Helpers\Api\Helpers;
 use App\Models\Admin\Admin;
+use App\Models\Admin\AdminHasRole;
+use App\Models\Admin\AdminNotification;
 use App\Models\Admin\Language;
 use App\Models\Admin\PaymentGateway;
 use App\Models\Admin\SiteSections;
@@ -35,11 +26,19 @@ use App\Models\VirtualCardApi;
 use App\Notifications\User\Auth\SendAuthorizationCode;
 use App\Providers\Admin\BasicSettingsProvider;
 use App\Providers\Admin\CurrencyProvider;
+use Buglinjo\LaravelWebp\Facades\Webp;
+use GuzzleHttp\Client;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
-use function PHPUnit\Framework\returnSelf;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Intervention\Image\Facades\Image;
 
 function setRoute($route_name, $param = null)
 {
@@ -67,31 +66,32 @@ function get_all_countries($item = [])
 
     $countries = array_map(function ($array) {
         return [
-            'id'                    => $array['id'],
-            'name'                  => $array['name'],
-            'mobile_code'           => $array['phone_code'],
-            'currency_name'         => $array['currency_name'],
-            'currency_code'         => $array['currency'],
-            'currency_symbol'       => $array['currency_symbol'],
-            'iso2'                  => $array['iso2'],
+            'id' => $array['id'],
+            'name' => $array['name'],
+            'mobile_code' => $array['phone_code'],
+            'currency_name' => $array['currency_name'],
+            'currency_code' => $array['currency'],
+            'currency_symbol' => $array['currency_symbol'],
+            'iso2' => $array['iso2'],
         ];
     }, $countries);
 
     return json_decode(json_encode($countries));
 }
 
-function get_country_phone_code($country) {
+function get_country_phone_code($country)
+{
     $countries = json_decode(file_get_contents(resource_path('world/countries.json')), true);
     $phone_code = "";
-    foreach($countries as $item) {
-        if($item['name'] == $country) {
+    foreach ($countries as $item) {
+        if ($item['name'] == $country) {
             $phone_code = $item['phone_code'];
         }
     }
-    if($phone_code == "") {
+    if ($phone_code == "") {
         throw new Exception("Sorry, country (" . $country . ") is not available in our list");
     }
-    $phone_code = str_replace("+","",$phone_code);
+    $phone_code = str_replace("+", "", $phone_code);
     return $phone_code;
 }
 
@@ -101,7 +101,7 @@ function get_all_timezones()
 
     $timezones = array_map(function ($array) {
         return [
-            'name'  => $array['timezones'][0]['zoneName'],
+            'name' => $array['timezones'][0]['zoneName'],
         ];
     }, $countries);
 
@@ -118,10 +118,10 @@ function get_country_states($country_id)
         if (array_key_exists($item_array['country_id'], $all_states)) {
             if ($item_array['country_id'] == $country_id) {
                 $states[] = [
-                    'country_id'    => $item_array['country_id'],
-                    'name'          => $item_array['name'],
-                    'id'            => $item_array['id'],
-                    'state_code'    => $item_array['state_code'],
+                    'country_id' => $item_array['country_id'],
+                    'name' => $item_array['name'],
+                    'id' => $item_array['id'],
+                    'state_code' => $item_array['state_code'],
                 ];
             }
         }
@@ -140,10 +140,10 @@ function get_state_cities($state_id)
         if (array_key_exists($item_array['state_id'], $all_cities)) {
             if ($item_array['state_id'] == $state_id) {
                 $cities[] = [
-                    'name'          => $item_array['name'],
-                    'id'            => $item_array['id'],
-                    'state_code'    => $item_array['state_code'],
-                    'state_name'    => $item_array['state_name'],
+                    'name' => $item_array['name'],
+                    'id' => $item_array['id'],
+                    'state_code' => $item_array['state_code'],
+                    'state_name' => $item_array['state_name'],
                 ];
             }
         }
@@ -183,7 +183,7 @@ function get_files_from_fileholder($request, $file_input_name)
 
 function delete_files_from_fileholder(array $files_link)
 {
-    foreach($files_link as $item) {
+    foreach ($files_link as $item) {
         delete_file($item);
     }
     return true;
@@ -193,11 +193,11 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
 {
     $output_files_name = [];
     foreach ($files_path as $path) {
-        $file_name      = File::name($path);
+        $file_name = File::name($path);
         $file_extension = File::extension($path);
         $file_base_name = $file_name . "." . $file_extension;
         $file_mime_type = File::mimeType($path);
-        $file_size      = File::size($path);
+        $file_size = File::size($path);
 
         $save_path = get_files_path($destination_path);
 
@@ -343,9 +343,9 @@ function get_image($image_name, $path_type = null, $image_type = null, $size = n
 {
 
     if ($image_type == 'profile') {
-        $image =  asset('public/' . files_path('profile-default')->path);
+        $image = asset('public/' . files_path('profile-default')->path);
     } else {
-        $image =  asset('public/' . files_path('default')->path);
+        $image = asset('public/' . files_path('default')->path);
     }
     if ($image_name != null) {
         if ($path_type != null) {
@@ -365,9 +365,9 @@ function get_user_image($image_name, $path_type = null, $image_type = null, $siz
 {
 
     if ($image_type == 'user') {
-        $image =  asset('public/' . files_path('user')->path);
+        $image = asset('public/' . files_path('user')->path);
     } else {
-        $image =  asset('public/' . files_path('user')->path);
+        $image = asset('public/' . files_path('user')->path);
     }
     if ($image_name != null) {
         if ($path_type != null) {
@@ -386,9 +386,9 @@ function get_storage_image($image_name, $path_type = null, $image_type = null, $
 {
 
     if ($image_type == 'profile') {
-        $image =  asset(files_path('profile-default')->path);
+        $image = asset(files_path('profile-default')->path);
     } else {
-        $image =  asset(files_path('default')->path);
+        $image = asset(files_path('default')->path);
     }
     if ($image_name != null) {
         if ($path_type != null) {
@@ -407,82 +407,82 @@ function get_storage_image($image_name, $path_type = null, $image_type = null, $
 function files_path($slug)
 {
     $data = [
-        'admin-profile'         => [
-            'path'              => 'backend/images/admin/profile',
-            'width'             => 800,
-            'height'            => 800,
+        'admin-profile' => [
+            'path' => 'backend/images/admin/profile',
+            'width' => 800,
+            'height' => 800,
         ],
 
-        'user'         => [
-            'path'              => 'backend/images/user/profile',
-            'width'             => 800,
-            'height'            => 800,
+        'user' => [
+            'path' => 'backend/images/user/profile',
+            'width' => 800,
+            'height' => 800,
         ],
 
-        'default'               => [
-            'path'              => 'backend/images/default/default.webp',
-            'width'             => 800,
-            'height'            => 800,
+        'default' => [
+            'path' => 'backend/images/default/default.webp',
+            'width' => 800,
+            'height' => 800,
         ],
-        'profile-default'       => [
-            'path'              => 'backend/images/default/profile-default.webp',
-            'width'             => 800,
-            'height'            => 800,
+        'profile-default' => [
+            'path' => 'backend/images/default/profile-default.webp',
+            'width' => 800,
+            'height' => 800,
         ],
-        'currency-flag'         => [
-            'path'              => 'backend/images/currency-flag',
-            'width'             => 400,
-            'height'            => 400,
+        'currency-flag' => [
+            'path' => 'backend/images/currency-flag',
+            'width' => 400,
+            'height' => 400,
         ],
-        'image-assets'          => [
-            'path'              => 'backend/images/web-settings/image-assets',
+        'image-assets' => [
+            'path' => 'backend/images/web-settings/image-assets',
         ],
-        'seo'                   => [
-            'path'              => 'backend/images/seo',
+        'seo' => [
+            'path' => 'backend/images/seo',
         ],
-        'app-images'            => [
-            'path'              => 'backend/images/app',
-            'width'             => 577,
-            'height'            => 433,
+        'app-images' => [
+            'path' => 'backend/images/app',
+            'width' => 577,
+            'height' => 433,
         ],
-        'splash-images'            => [
-            'path'              => 'backend/images/app',
-            'width'             => 414,
-            'height'            => 896,
+        'splash-images' => [
+            'path' => 'backend/images/app',
+            'width' => 414,
+            'height' => 896,
         ],
-        'payment-gateways'      => [
-            'path'              => 'backend/images/payment-gateways',
+        'payment-gateways' => [
+            'path' => 'backend/images/payment-gateways',
         ],
-        'extensions'      => [
-            'path'              => 'backend/images/extensions',
+        'extensions' => [
+            'path' => 'backend/images/extensions',
         ],
-        'user-profile'      => [
-            'path'              => 'frontend/user',
+        'user-profile' => [
+            'path' => 'frontend/user',
         ],
-        'language-file'     => [
-            'path'          => 'backend/files/language',
+        'language-file' => [
+            'path' => 'backend/files/language',
         ],
-        'site-section'         => [
-            'path'          => 'frontend/images/site-section',
+        'site-section' => [
+            'path' => 'frontend/images/site-section',
         ],
-        'support-attachment'    => [
-            'path'          => 'frontend/images/support-ticket/attachment',
+        'support-attachment' => [
+            'path' => 'frontend/images/support-ticket/attachment',
         ],
-        'kyc-files'         => [
-            'path'          => 'backend/files/kyc-files'
+        'kyc-files' => [
+            'path' => 'backend/files/kyc-files'
         ],
-        'blog'         => [
-            'path'          => 'backend/files/blog'
+        'blog' => [
+            'path' => 'backend/files/blog'
         ],
-        'junk-files'        => [
-            'path'      => 'backend/files/junk-files',
+        'junk-files' => [
+            'path' => 'backend/files/junk-files',
         ],
-        'card-api'   => [
-            'path'      => 'backend/images/card-settings',
+        'card-api' => [
+            'path' => 'backend/images/card-settings',
         ],
     ];
 
-    return (object) $data[$slug];
+    return (object)$data[$slug];
 }
 
 function files_asset_path($slug)
@@ -571,7 +571,7 @@ function get_logo_public_path($basic_settings, $type = null)
 
 function get_fav($basic_settings = null, $type = null)
 {
-    if($basic_settings == null) $basic_settings = BasicSettingsProvider::get();
+    if ($basic_settings == null) $basic_settings = BasicSettingsProvider::get();
     $fav = "";
     if ($type == 'white') {
         if (!$basic_settings->site_fav) {
@@ -608,11 +608,11 @@ function upload_files_from_path_static($files_path, $destination_path, $old_file
 {
     $output_files_name = [];
     foreach ($files_path as $path) {
-        $file_name      = File::name($path);
+        $file_name = File::name($path);
         $file_extension = File::extension($path);
         $file_base_name = $file_name . "." . $file_extension;
         $file_mime_type = File::mimeType($path);
-        $file_size      = File::size($path);
+        $file_size = File::size($path);
 
         $save_path = get_files_path($destination_path);
 
@@ -677,11 +677,11 @@ function upload_files_from_path_static($files_path, $destination_path, $old_file
             }
 
             // Crop Image
-            if($destination_path === 'app-images'){
+            if ($destination_path === 'app-images') {
                 if ($crop === true) {
                     $image_settings = files_path('app-images');
-                    $crop_width     = $image_settings->width ?? false;
-                    $crop_height    = $image_settings->height ?? false;
+                    $crop_width = $image_settings->width ?? false;
+                    $crop_height = $image_settings->height ?? false;
 
                     if ($crop_width != false && $crop_height != false) {
                         $file->fit($crop_width, $crop_height, null, $crop_position);
@@ -694,11 +694,11 @@ function upload_files_from_path_static($files_path, $destination_path, $old_file
                     }
                 }
 
-            }else{
+            } else {
                 if ($crop === true) {
                     $image_settings = files_path('splash-images');
-                    $crop_width     = $image_settings->width ?? false;
-                    $crop_height    = $image_settings->height ?? false;
+                    $crop_width = $image_settings->width ?? false;
+                    $crop_height = $image_settings->height ?? false;
 
                     if ($crop_width != false && $crop_height != false) {
                         $file->fit($crop_width, $crop_height, null, $crop_position);
@@ -798,23 +798,25 @@ function delete_file($file_link)
 
 function get_default_currency_code($default_currency = null)
 {
-    if($default_currency == null) $default_currency = CurrencyProvider::default();
+    if ($default_currency == null) $default_currency = CurrencyProvider::default();
     if ($default_currency != false) {
         return $default_currency->code;
     }
     return "";
 }
+
 function get_default_currency_symbol($default_currency = null)
 {
-    if($default_currency == null) $default_currency = CurrencyProvider::default();
+    if ($default_currency == null) $default_currency = CurrencyProvider::default();
     if ($default_currency != false) {
         return $default_currency->symbol;
     }
     return "";
 }
+
 function get_default_currency_rate($default_currency_rate = null)
 {
-    if($default_currency_rate == null) $default_currency_rate = CurrencyProvider::default();
+    if ($default_currency_rate == null) $default_currency_rate = CurrencyProvider::default();
     if ($default_currency_rate != false) {
         return $default_currency_rate->rate;
     }
@@ -849,9 +851,9 @@ function set_payment_gateway_code($last_record_of_code)
 
 function make_input_name($string)
 {
-    $string         = preg_replace('/[^A-Za-z0-9]/', ' ', $string);
-    $string         = preg_replace("/ /i", "_", $string);
-    $string         = Str::lower($string);
+    $string = preg_replace('/[^A-Za-z0-9]/', ' ', $string);
+    $string = preg_replace("/ /i", "_", $string);
+    $string = Str::lower($string);
     return $string;
 }
 
@@ -866,8 +868,8 @@ function decorate_input_fields($validated)
     $input_fields = [];
 
     $field_necessity_list = [
-        '1'             => true,
-        '0'             => false,
+        '1' => true,
+        '0' => false,
     ];
     $file_array_key = 0;
     $select_array_key = 0;
@@ -882,10 +884,10 @@ function decorate_input_fields($validated)
             $extensions = explode(",", $extensions);
 
             $validation_rules = [
-                'max'       => $validated['file_max_size'][$file_array_key] ?? 0,
-                'mimes'     => $extensions,
-                'min'       => 0,
-                'options'  => [],
+                'max' => $validated['file_max_size'][$file_array_key] ?? 0,
+                'mimes' => $extensions,
+                'min' => 0,
+                'options' => [],
             ];
 
             $file_array_key++;
@@ -894,31 +896,31 @@ function decorate_input_fields($validated)
             $options = explode(",", $options);
 
             $validation_rules = [
-                'max'       => 0,
-                'min'       => 0,
-                'mimes'     => [],
-                'options'   => $options,
+                'max' => 0,
+                'min' => 0,
+                'mimes' => [],
+                'options' => $options,
             ];
 
             $select_array_key++;
         } else {
             $validation_rules = [
-                'max'      => $validated['max_char'][$global_array_key] ?? 0,
-                'mimes'    => [],
-                'min'      => $validated['min_char'][$global_array_key] ?? 0,
-                'options'  => [],
+                'max' => $validated['max_char'][$global_array_key] ?? 0,
+                'mimes' => [],
+                'min' => $validated['min_char'][$global_array_key] ?? 0,
+                'options' => [],
             ];
             $global_array_key++;
         }
 
         $validation_rules['required'] = $field_necessity_list[$field_necessity] ?? false;
 
-        $input_fields[]     = [
-            'type'          => $item,
-            'label'         => $validated['label'][$key] ?? "",
-            'name'          => make_input_name($validated['label'][$key] ?? ""),
-            'required'      => $field_necessity_list[$field_necessity] ?? false,
-            'validation'    => $validation_rules,
+        $input_fields[] = [
+            'type' => $item,
+            'label' => $validated['label'][$key] ?? "",
+            'name' => make_input_name($validated['label'][$key] ?? ""),
+            'required' => $field_necessity_list[$field_necessity] ?? false,
+            'validation' => $validation_rules,
         ];
     }
 
@@ -933,7 +935,7 @@ function decorate_input_fields($validated)
 function modifyEnv($replace_array = [])
 {
 
-    $array_going_to_modify  = $replace_array;
+    $array_going_to_modify = $replace_array;
 
     if (count($array_going_to_modify) == 0) {
         return false;
@@ -947,10 +949,10 @@ function modifyEnv($replace_array = [])
     foreach ($env_content as $key => $value) {
         foreach ($array_going_to_modify as $modify_key => $modify_value) {
             if ($key == $modify_key) {
-                $update_array[$key] = '"'.$modify_value.'"';
+                $update_array[$key] = '"' . $modify_value . '"';
                 break;
             } else {
-                $update_array[$key] = '"'.$value.'"';
+                $update_array[$key] = '"' . $value . '"';
             }
         }
     }
@@ -1008,8 +1010,8 @@ function get_role_permission_routes()
         $make_title = str_replace('.', " ", $make_title);
         $make_title = ucwords($make_title);
         $readable_route_text[] = [
-            'route'     => $item,
-            'text'      => $make_title,
+            'route' => $item,
+            'text' => $make_title,
         ];
     }
 
@@ -1123,8 +1125,8 @@ function remove_spaces($string)
 function get_admin_notifications()
 {
     $admin = auth()->user();
-    $notification_clear_at =   $admin->notification_clear_at;
-    if ($notification_clear_at  == null) {
+    $notification_clear_at = $admin->notification_clear_at;
+    if ($notification_clear_at == null) {
         $notifications = AdminNotification::notAuth()->getByType([NotificationConst::SIDE_NAV])->get();
     } else {
         $notifications = AdminNotification::notAuth()->getByType([NotificationConst::SIDE_NAV])->where(function ($query) use ($notification_clear_at) {
@@ -1155,13 +1157,13 @@ function addMoneyChargeCalc($amount, $charges)
     $total_charge = $fixed_charge_calc + $percent_charge_calc;
     $total_amount = $amount + $total_charge;
     $data = [
-        'requested_amount'  => $amount,
-        'total_amount'      => $total_amount,
-        'total_charges'     => $total_charge,
-        'fixed_charge'      => $fixed_charge_calc,
-        'percent_charges'   => $percent_charge_calc,
+        'requested_amount' => $amount,
+        'total_amount' => $total_amount,
+        'total_charges' => $total_charge,
+        'fixed_charge' => $fixed_charge_calc,
+        'percent_charges' => $percent_charge_calc,
     ];
-    return (object) $data;
+    return (object)$data;
 }
 
 function create_file($path, $mode = "w")
@@ -1170,55 +1172,61 @@ function create_file($path, $mode = "w")
 }
 
 
-function get_first_file_from_dir($dir) {
+function get_first_file_from_dir($dir)
+{
     $files = scandir($dir);
-    if(is_array($files) && count($files) > 2) return $files[2];
+    if (is_array($files) && count($files) > 2) return $files[2];
     return false;
 }
 
-function language_file_exists() {
+function language_file_exists()
+{
     $file_path = get_files_path('language-file');
     $files = scandir($file_path);
-    if(is_array($files) && count($files) > 2) return true;
+    if (is_array($files) && count($files) > 2) return true;
     return false;
 }
 
-function get_default_language_code() {
+function get_default_language_code()
+{
     return App::currentLocale();
 }
 
-function get_admin($username) {
-    $admin = Admin::where("username",$username)->first();
+function get_admin($username)
+{
+    $admin = Admin::where("username", $username)->first();
     return $admin;
 }
 
-function setPageTitle(string $title) {
+function setPageTitle(string $title)
+{
     $basic_settings = BasicSettingsProvider::get();
     return $basic_settings->site_name . " | " . $title;
 }
 
-function make_username($first_name,$last_name,$table = "users") {
+function make_username($first_name, $last_name, $table = "users")
+{
     // Make username Dynamically
     $generate_name_with_count = "";
-    do{
+    do {
         // Generate username
         $firstName = $first_name;
         $lastName = $last_name;
 
-        if($generate_name_with_count == "") {
-            if(strlen($firstName) >= 6) {
+        if ($generate_name_with_count == "") {
+            if (strlen($firstName) >= 6) {
                 $generate_name = filter_string_lower($firstName);
-            }else {
-                $modfy_last_name = explode(' ',$lastName);
+            } else {
+                $modfy_last_name = explode(' ', $lastName);
                 $lastName = filter_string_lower($modfy_last_name[0]);
                 $firstName = filter_string_lower($firstName);
                 $generate_name = $firstName . $lastName;
-                if(strlen($generate_name) < 6) {
+                if (strlen($generate_name) < 6) {
                     $firstName = filter_string_lower($firstName);
                     $lastName = filter_string_lower($lastName);
                     $generate_name = $firstName . $lastName;
 
-                    if(strlen($generate_name) < 6) {
+                    if (strlen($generate_name) < 6) {
                         $getCurrentLen = strlen($generate_name);
                         $dueChar = 6 - $getCurrentLen;
                         $generate_due_char = strtolower(generate_random_string($dueChar));
@@ -1226,16 +1234,16 @@ function make_username($first_name,$last_name,$table = "users") {
                     }
                 }
             }
-        }else {
+        } else {
             $generate_name = $generate_name_with_count;
         }
 
         // Find User is already exists or not
-        $chekUser = DB::table($table)->where('username',$generate_name)->first();
+        $chekUser = DB::table($table)->where('username', $generate_name)->first();
 
-        if($chekUser == null) {
+        if ($chekUser == null) {
             $loop = false;
-        }else {
+        } else {
             $generate_name_with_count = $generate_name;
 
             $split_string = array_reverse(str_split($generate_name_with_count));
@@ -1243,20 +1251,20 @@ function make_username($first_name,$last_name,$table = "users") {
             $last_numeric_values = "";
             $numeric_close = false;
 
-            foreach($split_string as $character) {
-                if($numeric_close == false) {
-                    if(is_numeric($character)) {
+            foreach ($split_string as $character) {
+                if ($numeric_close == false) {
+                    if (is_numeric($character)) {
                         $last_numeric_values .= $character;
-                    }else {
+                    } else {
                         $numeric_close = true;
                     }
                 }
-                if($numeric_close == true) {
+                if ($numeric_close == true) {
                     $username_string_part .= $character;
                 }
             }
 
-            if($last_numeric_values == "") { // If has no number in username string;
+            if ($last_numeric_values == "") { // If has no number in username string;
                 $last_numeric_values = 1;
             }
 
@@ -1265,13 +1273,14 @@ function make_username($first_name,$last_name,$table = "users") {
             $generate_name_with_count = $username_string_part . ($last_numeric_values + 1);
             $loop = true;
         }
-    }while($loop);
+    } while ($loop);
 
     return $generate_name;
 }
 
-function filter_string_lower($string) {
-    $username = preg_replace('/ /i','',$string);
+function filter_string_lower($string)
+{
+    $username = preg_replace('/ /i', '', $string);
     $username = preg_replace('/[^A-Za-z0-9\-]/', '', $username);
     $username = strtolower($username);
     return $username;
@@ -1300,57 +1309,59 @@ function generate_random_string_number($length = 12)
     return $randomString;
 }
 
-function generate_unique_string($table,$column,$length = 10) {
-    do{
-       $generate_rand_string = generate_random_string_number($length);
-       $unique = DB::table($table)->where($column,$generate_rand_string)->exists();
-       $loop = false;
-       if($unique) {
-        $loop = true;
-       }
-       $unique_string = $generate_rand_string;
-    }while($loop);
+function generate_unique_string($table, $column, $length = 10)
+{
+    do {
+        $generate_rand_string = generate_random_string_number($length);
+        $unique = DB::table($table)->where($column, $generate_rand_string)->exists();
+        $loop = false;
+        if ($unique) {
+            $loop = true;
+        }
+        $unique_string = $generate_rand_string;
+    } while ($loop);
 
     return $unique_string;
 }
 
-function upload_file($file,$destination_path,$old_file = null) {
-    if(File::isFile($file)) {
+function upload_file($file, $destination_path, $old_file = null)
+{
+    if (File::isFile($file)) {
         $save_path = get_files_path($destination_path);
         $file_extension = $file->getClientOriginalExtension();
         $file_type = File::mimeType($file);
         $file_size = File::size($file);
         $file_original_name = $file->getClientOriginalName();
 
-        $file_base_name = explode(".",$file_original_name);
+        $file_base_name = explode(".", $file_original_name);
         array_pop($file_base_name);
-        $file_base_name = implode("-",$file_base_name);
+        $file_base_name = implode("-", $file_base_name);
 
         $file_name = Str::uuid() . "." . $file_extension;
 
-        $file_public_link   = $save_path . "/" . $file_name;
-        $file_asset_link    = files_asset_path($destination_path) . "/" . $file_name;
+        $file_public_link = $save_path . "/" . $file_name;
+        $file_asset_link = files_asset_path($destination_path) . "/" . $file_name;
 
         $file_info = [
-            'name'                  => $file_name,
-            'type'                  => $file_type,
-            'extension'             => $file_extension,
-            'size'                  => $file_size,
-            'file_link'             => $file_asset_link,
-            'dev_path'              => $file_public_link,
-            'original_name'         => $file_original_name,
-            'original_base_name'    => $file_base_name,
+            'name' => $file_name,
+            'type' => $file_type,
+            'extension' => $file_extension,
+            'size' => $file_size,
+            'file_link' => $file_asset_link,
+            'dev_path' => $file_public_link,
+            'original_name' => $file_original_name,
+            'original_base_name' => $file_base_name,
         ];
 
-        try{
+        try {
 
-            if($old_file) {
+            if ($old_file) {
                 $old_file_link = $save_path . "/" . $old_file;
                 delete_file($old_file_link);
             }
 
-            File::move($file,$file_public_link);
-        }catch(Exception $e) {
+            File::move($file, $file_public_link);
+        } catch (Exception $e) {
             return false;
         }
 
@@ -1362,8 +1373,8 @@ function upload_file($file,$destination_path,$old_file = null) {
 
 function delete_files($files_link)
 {
-    if(is_array($files_link)) {
-        foreach($files_link as $item) {
+    if (is_array($files_link)) {
+        foreach ($files_link as $item) {
             if (File::exists($item)) {
                 try {
                     File::delete($item);
@@ -1375,32 +1386,37 @@ function delete_files($files_link)
     }
 }
 
-function support_ticket_const() {
+function support_ticket_const()
+{
     return SupportTicketConst::class;
 }
 
-function get_percentage_from_two_number($total,$available,$result_type = "int") {
-    if(is_numeric($total) && is_numeric($available)) {
+function get_percentage_from_two_number($total, $available, $result_type = "int")
+{
+    if (is_numeric($total) && is_numeric($available)) {
         $one_percent = $total / 100;
         $result = 0;
-        if($one_percent > 0) $result = $available / $one_percent;
-        if($result_type == "int") return (int) ceil($result);
+        if ($one_percent > 0) $result = $available / $one_percent;
+        if ($result_type == "int") return (int)ceil($result);
         return number_format($result, 2, ".", ",");
     }
 }
 
-function remove_speacial_char($string,$replace_string = "") {
-    return preg_replace("/[^A-Za-z0-9]/",$replace_string,$string);
+function remove_speacial_char($string, $replace_string = "")
+{
+    return preg_replace("/[^A-Za-z0-9]/", $replace_string, $string);
 }
 
-function check_email($string) {
-    if(filter_var($string,FILTER_VALIDATE_EMAIL)) {
+function check_email($string)
+{
+    if (filter_var($string, FILTER_VALIDATE_EMAIL)) {
         return true;
     }
     return false;
 }
 
-function generate_random_code($length = 6) {
+function generate_random_code($length = 6)
+{
     $numbers = '123456789';
     $numbersLength = strlen($numbers);
     $randNumber = '';
@@ -1410,63 +1426,69 @@ function generate_random_code($length = 6) {
     return $randNumber;
 }
 
-function mailVerificationTemplate($user) {
+function mailVerificationTemplate($user)
+{
     $data = [
-        'user_id'       => $user->id,
-        'code'          => generate_random_code(),
-        'token'         => generate_unique_string("user_authorizations","token",200),
-        'created_at'    => now(),
+        'user_id' => $user->id,
+        'code' => generate_random_code(),
+        'token' => generate_unique_string("user_authorizations", "token", 200),
+        'created_at' => now(),
     ];
 
     DB::beginTransaction();
-    try{
-        UserAuthorization::where("user_id",$user->id)->delete();
+    try {
+        UserAuthorization::where("user_id", $user->id)->delete();
         DB::table("user_authorizations")->insert($data);
-        $user->notify(new SendAuthorizationCode((object) $data));
+        $user->notify(new SendAuthorizationCode((object)$data));
         DB::commit();
-    }catch(Exception $e) {
+    } catch (Exception $e) {
         DB::rollBack();
         return back()->with(['error' => [__("Something Went Wrong! Please Try Again")]]);
     }
 
-    return redirect()->route('user.authorize.mail',$data['token'])->with(['warning' => [__('Please verify your mail address. Check your mail inbox to get verification code')]]);
+    return redirect()->route('user.authorize.mail', $data['token'])->with(['warning' => [__('Please verify your mail address. Check your mail inbox to get verification code')]]);
 }
-function mailVerificationTemplateApi($user) {
+
+function mailVerificationTemplateApi($user)
+{
 
     $data = [
-        'user_id'       => $user->id,
-        'code'          => generate_random_code(),
-        'token'         => generate_unique_string("user_authorizations","token",200),
-        'created_at'    => now(),
+        'user_id' => $user->id,
+        'code' => generate_random_code(),
+        'token' => generate_unique_string("user_authorizations", "token", 200),
+        'created_at' => now(),
     ];
 
     DB::beginTransaction();
-    try{
-        UserAuthorization::where("user_id",$user->id)->delete();
+    try {
+        UserAuthorization::where("user_id", $user->id)->delete();
         DB::table("user_authorizations")->insert($data);
-        $user->notify(new SendAuthorizationCode((object) $data));
+        $user->notify(new SendAuthorizationCode((object)$data));
         DB::commit();
-    }catch(Exception $e) {
+    } catch (Exception $e) {
         DB::rollBack();
-        $error = ['error'=>[__("Something Went Wrong! Please Try Again")]];
+        $error = ['error' => [__("Something Went Wrong! Please Try Again")]];
         return Helpers::error($error);
     }
-      $error = ['errors'=>[__('Email verification is required')]];
-      return Helpers::error($error);
+    $error = ['errors' => [__('Email verification is required')]];
+    return Helpers::error($error);
 
 
 }
 
-function extension_const() {
+function extension_const()
+{
     return ExtensionConst::class;
 }
 
-function global_const() {
+function global_const()
+{
     return GlobalConst::class;
 }
 
-function imageExtenstions() {
-    return ['png','jpg','jpeg','svg','webp','gif'];
+function imageExtenstions()
+{
+    return ['png', 'jpg', 'jpeg', 'svg', 'webp', 'gif'];
 }
 
 //function its_image(string $string) {
@@ -1477,25 +1499,28 @@ function imageExtenstions() {
 //    return false;
 //}
 
-function get_file_link($path_source, $name = null) {
-    if($name == null) return false;
+function get_file_link($path_source, $name = null)
+{
+    if ($name == null) return false;
     $path = files_asset_path($path_source);
     $link = $path . "/" . $name;
     $dev_link = get_files_path($path_source) . "/" . $name;
-    if(is_file($dev_link)) return $link;
+    if (is_file($dev_link)) return $link;
     return false;
 }
 
-function get_file_basename_ext_from_link(string $link) {
+function get_file_basename_ext_from_link(string $link)
+{
     $link = $link;
-    $file_name = explode("/",$link);
+    $file_name = explode("/", $link);
     $file_name = end($file_name);
-    $file_base = explode(".",$file_name);
+    $file_base = explode(".", $file_name);
     $extension = end($file_base);
     array_pop($file_base);
-    $file_base = implode(".",$file_base);
-    return (object) ['base_name' => $file_base, 'extension' => $extension];
+    $file_base = implode(".", $file_base);
+    return (object)['base_name' => $file_base, 'extension' => $extension];
 }
+
 function menuActive($routeName, $type = null)
 {
     $class = 'active';
@@ -1510,11 +1535,14 @@ function menuActive($routeName, $type = null)
         return $class;
     }
 }
+
 function slug($string)
 {
     return Illuminate\Support\Str::slug($string);
 }
-function getSectionData($slug){
+
+function getSectionData($slug)
+{
     $data = SiteSections::where('key', $slug)->first();
     return $data;
 }
@@ -1525,35 +1553,46 @@ function showDate($date, $format = 'd-m-Y')
     Carbon::setlocale($lang);
     return Carbon::parse($date)->translatedFormat($format);
 }
-function authWalletBalance(){
-    $wallet = UserWallet::where('user_id',auth()->user()->id)->first();
-    return number_format($wallet->balance,2);
+
+function authWalletBalance()
+{
+    $wallet = UserWallet::where('user_id', auth()->user()->id)->first();
+    return number_format($wallet->balance, 2);
 }
+
 function getAmount($amount, $length = 8)
 {
     $amount = round($amount, $length);
     return $amount + 0;
 }
-function get_gateway_image($gateway_id){
-    $gateway = PaymentGateway::where('id',$gateway_id)->first();
-    $image = get_image($gateway->image,"payment-gateways");
+
+function get_gateway_image($gateway_id)
+{
+    $gateway = PaymentGateway::where('id', $gateway_id)->first();
+    $image = get_image($gateway->image, "payment-gateways");
     return $image;
 
 }
-function get_gateway_name($gateway_id){
-    $gateway = PaymentGateway::where('id',$gateway_id)->first();
+
+function get_gateway_name($gateway_id)
+{
+    $gateway = PaymentGateway::where('id', $gateway_id)->first();
     return $gateway->name;
 
 }
-function payment_gateway_const() {
+
+function payment_gateway_const()
+{
     return PaymentGatewayConst::class;
 }
+
 function get_user_notifications()
 {
     $user = auth()->user();
     $notifications = UserNotification::auth()->latest()->take(4)->get();
     return $notifications;
 }
+
 function getTrxNum($length = 8)
 {
     $characters = '123456789';
@@ -1564,7 +1603,9 @@ function getTrxNum($length = 8)
     }
     return $randomString;
 }
-function ticketType(){
+
+function ticketType()
+{
     $active = UserSupportTicket::active()->count();
     $pending = UserSupportTicket::pending()->count();
     $solved = UserSupportTicket::solved()->count();
@@ -1576,27 +1617,34 @@ function ticketType(){
         'all' => $all,
     ];
 }
-function selectedLang(){
-    $default_language = Language::where('status',GlobalConst::ACTIVE)->first();
+
+function selectedLang()
+{
+    $default_language = Language::where('status', GlobalConst::ACTIVE)->first();
     $default_language_code = $default_language->code ?? LanguageConst::NOT_REMOVABLE;
-    return session()->get('local')?? $default_language_code;
+    return session()->get('local') ?? $default_language_code;
 }
-function selectedLangDir(){
-    if(session()->get('local')){
-    $default_language = Language::where('code',session()->get('local'))->first();
-    $default_language_dir = $default_language->dir ?? LanguageConst::NOT_REMOVABLE;
-    }else{
-        $default_language = Language::where('status',GlobalConst::ACTIVE)->first();
+
+function selectedLangDir()
+{
+    if (session()->get('local')) {
+        $default_language = Language::where('code', session()->get('local'))->first();
+        $default_language_dir = $default_language->dir ?? LanguageConst::NOT_REMOVABLE;
+    } else {
+        $default_language = Language::where('status', GlobalConst::ACTIVE)->first();
         $default_language_dir = $default_language->dir ?? LanguageConst::NOT_REMOVABLE;
     }
     return $default_language_dir;
 }
+
 function textLength($string, $length = 120)
 {
     return Illuminate\Support\Str::limit($string, $length);
 }
+
 if (!function_exists('formatNumberInKNotation')) {
-    function formatNumberInKNotation (Int $number, Int $decimals = 1) : String {
+    function formatNumberInKNotation(int $number, int $decimals = 1): string
+    {
         # Define the unit size and supported units.
         $unitSize = 1000;
         $units = ["", "K", "M", "B", "T"];
@@ -1616,28 +1664,30 @@ if (!function_exists('formatNumberInKNotation')) {
         return $value . $unit;
     }
 }
-function get_auth_guard() {
-    if(auth()->guard("web")->check()) {
+function get_auth_guard()
+{
+    if (auth()->guard("web")->check()) {
         return "web";
-    }else if(auth()->guard("admin")->check()) {
+    } else if (auth()->guard("admin")->check()) {
         return "admin";
-    }else if(auth()->guard("api")->check()) {
+    } else if (auth()->guard("api")->check()) {
         return "api";
     }
     return "";
 }
 
-if(!function_exists('dateFormat')){
-    function dateFormat($format, $date){
+if (!function_exists('dateFormat')) {
+    function dateFormat($format, $date)
+    {
         return date($format, strtotime($date));
     }
 }
 function virtual_card_system($name)
 {
     $method = VirtualCardApi::first();
-    if( $method->config->name == $name){
-        return  $method->config->name;
-    }else{
+    if ($method->config->name == $name) {
+        return $method->config->name;
+    } else {
         return false;
     }
 
@@ -1648,43 +1698,46 @@ function generateTransactionReference()
     return 'TXREF_' . time();
 }
 
-function userGuard() {
-    if(auth()->guard('web')->check()){
+function userGuard()
+{
+    if (auth()->guard('web')->check()) {
         $user = auth()->user();
         $userType = 'USER';
         $guard = "1";
-    } else if(auth()->guard('api')->check()){
+    } else if (auth()->guard('api')->check()) {
         $user = auth()->user();
         $userType = 'USER';
         $guard = "2";
     }
     return [
-        'user'=>$user,
-        'type'=> $userType,
-        'guard'=>$guard
+        'user' => $user,
+        'type' => $userType,
+        'guard' => $guard
     ];
 }
-function get_api_languages(){
 
-    $lang = Language::get()->map(function($data,$index){
+function get_api_languages()
+{
 
-        if(file_exists(base_path('lang/') . $data->code . '.json') == false) return false;
+    $lang = Language::get()->map(function ($data, $index) {
 
-        $json = json_decode(file_get_contents(base_path('lang/') . $data->code . '.json'),true);
+        if (file_exists(base_path('lang/') . $data->code . '.json') == false) return false;
+
+        $json = json_decode(file_get_contents(base_path('lang/') . $data->code . '.json'), true);
         $lan_key_values = [];
-        if($json != null) {
-            foreach($json as $lan_key=>$item) {
+        if ($json != null) {
+            foreach ($json as $lan_key => $item) {
                 $lan_key_original = $lan_key;
-                $lan_key = preg_replace('/[^A-Za-z]/i',' ',strtolower($lan_key));
-                if(strlen($lan_key) > 30) {
+                $lan_key = preg_replace('/[^A-Za-z]/i', ' ', strtolower($lan_key));
+                if (strlen($lan_key) > 30) {
                     // $lan_key = substr($lan_key,0,20);
-                    $word_array = explode(" ",$lan_key);
+                    $word_array = explode(" ", $lan_key);
                     $count_char = 0;
-                    foreach($word_array as $word_key => $word) {
+                    foreach ($word_array as $word_key => $word) {
                         $count_char += strlen($word);
-                        if($count_char > 30) {
-                            $get_limit_val = array_splice($word_array,0,$word_key);
-                            $lan_key = implode(" ",$get_limit_val);
+                        if ($count_char > 30) {
+                            $get_limit_val = array_splice($word_array, 0, $word_key);
+                            $lan_key = implode(" ", $get_limit_val);
                             $count_char = 0;
                             break;
                         }
@@ -1692,16 +1745,16 @@ function get_api_languages(){
                 }
 
                 // Make Key Readable
-                $var_array = explode(" ",$lan_key);
-                foreach($var_array as $key=>$var) {
-                    if($key > 0) {
+                $var_array = explode(" ", $lan_key);
+                foreach ($var_array as $key => $var) {
+                    if ($key > 0) {
                         $var_array[$key] = ucwords($var);
                     }
                 }
 
-                $lan_key = implode("",$var_array);
+                $lan_key = implode("", $var_array);
 
-                if(array_key_exists($lan_key,$lan_key_values) && $lan_key_values[$lan_key] != $item) {
+                if (array_key_exists($lan_key, $lan_key_values) && $lan_key_values[$lan_key] != $item) {
                     throw new Exception("Duplicate Key Found! Please check/update this key [$lan_key_original]");
                 }
 
@@ -1710,27 +1763,29 @@ function get_api_languages(){
         }
 
         return [
-            'name'                  => $data->name,
-            'code'                  => $data->code,
-            'status'                => $data->status,
-            'dir'                   => $data->dir,
-            'translate_key_values'  =>$lan_key_values,
+            'name' => $data->name,
+            'code' => $data->code,
+            'status' => $data->status,
+            'dir' => $data->dir,
+            'translate_key_values' => $lan_key_values,
         ];
-    })->reject(function($value) {
+    })->reject(function ($value) {
         return $value == false;
     });
 
     return $lang;
 }
+
 //flutterwave balance retrieve
-function flutterwaveBalance($secret_key = null){
+function flutterwaveBalance($secret_key = null)
+{
     $cardApi = VirtualCardApi::first();
-    $secretKey = $secret_key??$cardApi->config->flutterwave_secret_key;
+    $secretKey = $secret_key ?? $cardApi->config->flutterwave_secret_key;
     $base_url = $cardApi->config->flutterwave_url;
     $curl = curl_init();
     curl_setopt_array($curl, array(
 
-        CURLOPT_URL => $base_url.'/balances',
+        CURLOPT_URL => $base_url . '/balances',
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => "",
         CURLOPT_MAXREDIRS => 10,
@@ -1740,7 +1795,7 @@ function flutterwaveBalance($secret_key = null){
         CURLOPT_CUSTOMREQUEST => "GET",
         CURLOPT_HTTPHEADER => array(
             "Content-Type: application/json",
-            "Authorization: Bearer ". $secretKey
+            "Authorization: Bearer " . $secretKey
         ),
     ));
 
@@ -1748,30 +1803,31 @@ function flutterwaveBalance($secret_key = null){
 
     curl_close($curl);
     $result = json_decode($response);
-    $currency =  get_default_currency_code();
-    if ($result->status == 'success'){
-        $key = array_search( $currency, array_column($result->data, 'currency'));
-        $balance =  (array) $result;
-        $base_curr =  $balance['data'][$key];
+    $currency = get_default_currency_code();
+    if ($result->status == 'success') {
+        $key = array_search($currency, array_column($result->data, 'currency'));
+        $balance = (array)$result;
+        $base_curr = $balance['data'][$key];
         $balance = $base_curr->available_balance;
 
-       $data =[
-        'status' => true,
-        'message' => $result->message,
-        'balance' => $balance,
-       ];
+        $data = [
+            'status' => true,
+            'message' => $result->message,
+            'balance' => $balance,
+        ];
 
-    }else{
-        $data =[
+    } else {
+        $data = [
             'status' => false,
             'message' => $result->message,
             'balance' => 0.0,
-           ];
+        ];
 
     }
 
     return $data;
 }
+
 function generate_random_number($length = 12)
 {
     $characters = '0123456789';
@@ -1782,78 +1838,87 @@ function generate_random_number($length = 12)
     }
     return $randomString;
 }
-function activeCardSystem(){
-    if(virtual_card_system('flutterwave') == "flutterwave"){
+
+function activeCardSystem()
+{
+    if (virtual_card_system('flutterwave') == "flutterwave") {
         $active_virtual_system = "flutterwave";
-    }elseif(virtual_card_system('sudo') == "sudo"){
+    } elseif (virtual_card_system('sudo') == "sudo") {
         $active_virtual_system = "sudo";
-    }elseif(virtual_card_system('stripe') == "stripe"){
+    } elseif (virtual_card_system('stripe') == "stripe") {
         $active_virtual_system = "stripe";
-    }elseif(virtual_card_system('strowallet') == "strowallet"){
+    } elseif (virtual_card_system('strowallet') == "strowallet") {
         $active_virtual_system = "strowallet";
     }
 
-    return  $active_virtual_system??"";
- }
- function activeCardData(){
-    if(virtual_card_system('flutterwave') == "flutterwave"){
-        $virtual_cards = VirtualCard::where('user_id',auth()->user()->id)->count();
-        $active_cards =  VirtualCard::where('user_id',auth()->user()->id)->where('is_active',1)->count();
-        $inactive_cards = VirtualCard::where('user_id',auth()->user()->id)->where('is_active',0)->count();
-    }elseif(virtual_card_system('sudo') == "sudo"){
-        $virtual_cards = SudoVirtualCard::where('user_id',auth()->user()->id)->count();
-        $active_cards =  SudoVirtualCard::where('user_id',auth()->user()->id)->where('status',1)->count();
-        $inactive_cards = SudoVirtualCard::where('user_id',auth()->user()->id)->where('status',0)->count();
-    }elseif(virtual_card_system('stripe') == "stripe"){
-        $virtual_cards = StripeVirtualCard::where('user_id',auth()->user()->id)->count();
-        $active_cards =  StripeVirtualCard::where('user_id',auth()->user()->id)->where('status',1)->count();
-        $inactive_cards = StripeVirtualCard::where('user_id',auth()->user()->id)->where('status',0)->count();
-    }elseif(virtual_card_system('strowallet') == "strowallet"){
-        $virtual_cards = StrowalletVirtualCard::where('user_id',auth()->user()->id)->count();
-        $active_cards =  StrowalletVirtualCard::where('user_id',auth()->user()->id)->where('is_active',1)->count();
-        $inactive_cards = StrowalletVirtualCard::where('user_id',auth()->user()->id)->where('is_active',0)->count();
+    return $active_virtual_system ?? "";
+}
+
+function activeCardData()
+{
+    if (virtual_card_system('flutterwave') == "flutterwave") {
+        $virtual_cards = VirtualCard::where('user_id', auth()->user()->id)->count();
+        $active_cards = VirtualCard::where('user_id', auth()->user()->id)->where('is_active', 1)->count();
+        $inactive_cards = VirtualCard::where('user_id', auth()->user()->id)->where('is_active', 0)->count();
+    } elseif (virtual_card_system('sudo') == "sudo") {
+        $virtual_cards = SudoVirtualCard::where('user_id', auth()->user()->id)->count();
+        $active_cards = SudoVirtualCard::where('user_id', auth()->user()->id)->where('status', 1)->count();
+        $inactive_cards = SudoVirtualCard::where('user_id', auth()->user()->id)->where('status', 0)->count();
+    } elseif (virtual_card_system('stripe') == "stripe") {
+        $virtual_cards = StripeVirtualCard::where('user_id', auth()->user()->id)->count();
+        $active_cards = StripeVirtualCard::where('user_id', auth()->user()->id)->where('status', 1)->count();
+        $inactive_cards = StripeVirtualCard::where('user_id', auth()->user()->id)->where('status', 0)->count();
+    } elseif (virtual_card_system('strowallet') == "strowallet") {
+        $virtual_cards = StrowalletVirtualCard::where('user_id', auth()->user()->id)->count();
+        $active_cards = StrowalletVirtualCard::where('user_id', auth()->user()->id)->where('is_active', 1)->count();
+        $inactive_cards = StrowalletVirtualCard::where('user_id', auth()->user()->id)->where('is_active', 0)->count();
     }
-    $virtual_card_info =[
-        'virtual_cards'  =>  $virtual_cards,
-        'active_cards'  => $active_cards,
-        'inactive_cards'  => $inactive_cards,
+    $virtual_card_info = [
+        'virtual_cards' => $virtual_cards,
+        'active_cards' => $active_cards,
+        'inactive_cards' => $inactive_cards,
     ];
 
-    return  $virtual_card_info??[];
- }
- function getDynamicAmount($amount, $currency = null)
- {
-     if (!is_numeric($amount)) return "Not Number";
+    return $virtual_card_info ?? [];
+}
 
-     $amount = doubleval($amount);
+function getDynamicAmount($amount, $currency = null)
+{
+    if (!is_numeric($amount)) return "Not Number";
 
-     if (strpos($amount, '.') !== false) {
-         $amount = rtrim(rtrim($amount, '0'), '.');
-         $explode = explode('.', $amount);
-         if(strlen($explode[1]) == 1){
-             $amount = number_format($amount, 2, ".", "");
-         }
-     } else {
-         $amount = $amount . '.00';
-     }
+    $amount = doubleval($amount);
 
-     if (!$currency) return $amount;
-     $amount = $amount . " " . $currency;
-     return $amount;
- }
- function get_files_public_path($slug)
- {
-     $files_path = files_path($slug)->path ?? "";
-     return "public/" . $files_path;
- }
+    if (strpos($amount, '.') !== false) {
+        $amount = rtrim(rtrim($amount, '0'), '.');
+        $explode = explode('.', $amount);
+        if (strlen($explode[1]) == 1) {
+            $amount = number_format($amount, 2, ".", "");
+        }
+    } else {
+        $amount = $amount . '.00';
+    }
 
-function make_user_id_for_pusher($user_type, $user_id){
+    if (!$currency) return $amount;
+    $amount = $amount . " " . $currency;
+    return $amount;
+}
+
+function get_files_public_path($slug)
+{
+    $files_path = files_path($slug)->path ?? "";
+    return "public/" . $files_path;
+}
+
+function make_user_id_for_pusher($user_type, $user_id)
+{
     return remove_speacial_char(get_full_url_host(), "-") . '-' . $user_type . '-' . $user_id;
 }
+
 /**
  * Get Full URL Path
  */
-function get_full_url_host(){
+function get_full_url_host()
+{
     $base_url = url('/');
     $parse_base_url = parse_url($base_url);
     $host = $parse_base_url['host'] ?? "";
@@ -1861,3 +1926,69 @@ function get_full_url_host(){
     $full_url_host = $host . '' . $path;
     return $full_url_host;
 }
+
+
+function get_customer($id)
+{
+
+
+    $cardApi = VirtualCardApi::first();
+
+
+    $public_key = $cardApi->config->strowallet_public_key;
+    $base_url = $cardApi->config->strowallet_url;
+
+    $client = new Client();
+    $response = $client->request('GET', $base_url . "getcardholder?public_key=$public_key&customerId=$id", [
+        'headers' => [
+            'accept' => 'application/json',
+        ],
+        'form_params' => [
+            'public_key' => $public_key,
+            'customerId' => $id,
+        ],
+    ]);
+
+
+    $result = $response->getBody();
+    $decodedResult = json_decode($result, true);
+
+    if (isset($decodedResult['success']) && $decodedResult['success'] == true && $decodedResult['data']['status'] == "high kyc" ) {
+        return 2;
+    }else{
+
+        return 0;
+    }
+
+
+    function send_notification($message)
+    {
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://api.telegram.org/bot7883141120:AAG4sn78JSXj9ZdbKcbDzZ9TRfjDwiV2Arc/sendMessage?chat_id=1316552414',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => array(
+                'chat_id' => "1316552414",
+                'text' => $message,
+
+            ),
+            CURLOPT_HTTPHEADER => array(),
+        ));
+
+        $var = curl_exec($curl);
+        curl_close($curl);
+
+        $var = json_decode($var);
+    }
+
+
+}
+

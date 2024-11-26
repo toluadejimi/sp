@@ -483,7 +483,7 @@ class  StrowalletVirtualCardController extends Controller
 
 
         // for live code
-        $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url,$formData);
+        $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url,$formData, $amount);
         if($created_card['status'] == false){
             $error = ['error'=>[$created_card['message'] .' ,'.__('Please Contact With Administration.')]];
             return Helpers::error($error);

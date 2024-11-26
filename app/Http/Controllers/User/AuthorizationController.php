@@ -36,6 +36,9 @@ class AuthorizationController extends Controller
 
     }
 
+
+
+
     /**
      * Display a listing of the resource.
      *
@@ -383,29 +386,6 @@ class AuthorizationController extends Controller
 
 
 
-        $formdata = ([
-        'public_key' => $public_key,
-        'houseNumber' => $request->houseNumber,
-        'firstName' => $request->firstname,
-        'lastName' => $request->lastname,
-        'idNumber' => $request->doc_no,
-        'customerEmail' => Auth::user()->email,
-        'phoneNumber' => Auth::user()->mobile,
-        'dateOfBirth' => $formattedDate,
-        'idImage' => $get_doc_url,
-        'userPhoto' => $get_selfie_url,
-        'line1' => $request->line1,
-        'state' => $request->state,
-        'zipCode' => $zip,
-        'city' => $request->city,
-        'country' => 'Nigeria',
-        'idType' => $request->doc_type,
-
-    ]);
-
-
-
-
 
         $client = new Client();
         $response = $client->request('POST', $base_url . 'create-user/', [
@@ -417,7 +397,7 @@ class AuthorizationController extends Controller
                 'houseNumber' => $request->houseNumber,
                 'firstName' => $request->firstname,
                 'lastName' => $request->lastname,
-                'idNumber' => $request->doc_no,
+                'idNumber' => rand(123456, 987654),
                 'customerEmail' => Auth::user()->email,
                 'phoneNumber' => Auth::user()->mobile,
                 'dateOfBirth' => $formattedDate,
@@ -426,9 +406,9 @@ class AuthorizationController extends Controller
                 'line1' => $request->line1,
                 'state' => $request->state,
                 'zipCode' => $zip,
-                'city' => $request->city,
-                'country' => 'Nigeria',
-                'idType' => $request->doc_type,
+                'city' => "Accra",
+                'country' => "Ghana",
+                'idType' => "PASSPORT",
 
             ],
         ]);
@@ -438,24 +418,16 @@ class AuthorizationController extends Controller
         $result = $response->getBody();
         $decodedResult = json_decode($result, true);
 
-
-        dd($decodedResult, $formdata);
-
         if (isset($decodedResult['success']) && $decodedResult['success'] == true) {
-            $data = [
-                'status' => true,
-                'message' => "Create Customer Successfully.",
-                'data' => $decodedResult['response'],
-            ];
+
+            User::where('id', Auth::id())->update(['strowallet_id' => $decodedResult['response']['customerId']]);
+            return redirect("/user/virtual-card")->with(['message' => "You account is being processed"]);
+
         } else {
-            $data = [
-                'status' => false,
-                'message' => $decodedResult['message'] ?? 'Something is wrong! Contact With Admin',
-                'data' => null,
-            ];
+            return back()->with(['error' => $decodedResult['message']]);
+
         }
 
-        return $data;
     }
 
 
