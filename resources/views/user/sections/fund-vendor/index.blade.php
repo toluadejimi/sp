@@ -332,12 +332,12 @@
 
 
         function getCSRFToken() {
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            if (!metaTag) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            if (!csrfToken) {
                 console.error("CSRF token meta tag not found.");
                 return null;
             }
-            return metaTag.getAttribute("content");
+            return csrfToken.getAttribute("content");
         }
 
         // Function to send POST request
@@ -346,10 +346,7 @@
             const email = emailInput.value;
             const csrfToken = getCSRFToken();
 
-
-
-
-            console.log(getCSRFToken());
+            console.log(csrfToken);
 
             if (!vendorId || !email) {
                 usernameLabel.textContent = "Both fields are required.";
@@ -357,15 +354,8 @@
             }
 
             try {
-                {{--const response = await fetch("{{ route('user.transfer.money.vendor.checkusername') }}", {--}}
-                {{--    method: "POST",--}}
-                {{--    headers: {--}}
-                {{--        "Content-Type": "application/json",--}}
-                {{--        "X-CSRF-TOKEN": csrfToken,--}}
+                console.log(csrfToken);
 
-                {{--    },--}}
-                {{--    body: JSON.stringify({ vendor_id: vendorId, email: email }),--}}
-                {{--});--}}
                 console.log('CSRF Token:', csrfToken);
                 const response = await fetch("{{ url('user/transfer/money/vendor/checkusername') }}", {
                     method: "POST",
