@@ -15,6 +15,7 @@ use App\Models\Admin\PaymentGatewayCurrency;
 use App\Models\Setting;
 use App\Models\TemporaryData;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Models\VirtualAccount;
@@ -50,7 +51,10 @@ class AddMoneyController extends Controller
         }
 
 
+
         $va = VirtualAccount::where('user_id', Auth::id())->first() ?? null;
+
+
 
 
         $page_title = __("Add Money");
@@ -139,6 +143,11 @@ class AddMoneyController extends Controller
 
             }
         }
+
+
+
+
+
 
 
         if ($request->type == "ussd") {
@@ -719,6 +728,84 @@ class AddMoneyController extends Controller
             return Helpers::onlysuccess($message);
 
         }
+
+
+    }
+
+
+
+
+    public function getAccount(Request $request)
+    {
+
+
+        $first_name = Auth::user()->firstname;
+        $last_name = Auth::user()->lastname;
+        $middle_name = Auth::user()->middlename;
+        $email = Auth::user()->email;
+        $phone = Auth::user()->full_mobile;
+        $nin = Auth::user()->nin;
+        $bvn = Auth::user()->bvn;
+        $amount = $request->amount;
+
+
+        $key = env('WOVENKEY');
+        $databody = array(
+            "customer_reference" => $last_name . "_" . $first_name . date('his'),
+            "name" => $first_name . " $middle_name " . $last_name,
+            "email" => $email,
+            "mobile_number" => $phone,
+            "bvn" => $bvn,
+            "nin" => $nin,
+            "callback_url" => url('') . "/api/callback-woven",
+            "collection_bank" => "000017"//"060001" //"000017",
+        );
+
+
+        $post_data = json_encode($databody);
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://api.woven.finance/v2/api/vnubans/create_customer',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $post_data,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                "api_secret: $key"
+            ),
+        ));
+        $var = curl_exec($curl);
+        curl_close($curl);
+        $var = json_decode($var);
+        $status = $var->status ?? null;
+
+
+        if ($status == "success") {
+            $va = new VirtualAccount();
+            $va->user_id = Auth::id();
+            $va->bank = $var->data->bank_name;
+            $va->bank_code = $var->data->bank_code;
+            $va->account_no = $var->data->vnuban;
+            $va->account_name = $var->data->account_name;
+            $va->status = 2;
+            $va->save();
+
+            return back()->with(['success' => [__('Account has been created')]]);
+
+
+        }
+
+
+        $message = json_encode($var);
+        send_notification($message);
+        return back()->with(['error' => [__("Account can not be created this time please try again")]]);
+
 
 
     }

@@ -59,6 +59,8 @@ Route::prefix("user")->name("user.")->group(function(){
     Route::controller(AddMoneyController::class)->prefix("add-money")->name("add.money.")->group(function(){
         Route::get('/','index')->name("index");
         Route::post('submit','submit')->name('submit');
+        Route::any('get-account','getAccount')->name("create");
+
 
 
         //paypal
