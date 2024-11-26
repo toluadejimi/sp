@@ -357,12 +357,21 @@
             }
 
             try {
-                const response = await fetch("{{ route('user.transfer.money.vendor.checkusername') }}", {
+                {{--const response = await fetch("{{ route('user.transfer.money.vendor.checkusername') }}", {--}}
+                {{--    method: "POST",--}}
+                {{--    headers: {--}}
+                {{--        "Content-Type": "application/json",--}}
+                {{--        "X-CSRF-TOKEN": csrfToken,--}}
+
+                {{--    },--}}
+                {{--    body: JSON.stringify({ vendor_id: vendorId, email: email }),--}}
+                {{--});--}}
+                console.log('CSRF Token:', csrfToken);
+                const response = await fetch("{{ url('user/transfer/money/vendor/checkusername') }}", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRF-TOKEN": csrfToken,
-
                     },
                     body: JSON.stringify({ vendor_id: vendorId, email: email }),
                 });
