@@ -1018,13 +1018,14 @@ class AddMoneyController extends Controller
 
 
 
-            Mail::to($data['email'])->send(new Fundwallet($data['first_name'], $data['amount']));
+            $mail = Mail::to($data['email'])->send(new Fundwallet($data['first_name'], $data['amount']));
 
 
 
             return response()->json([
                     'status' => true,
-                    'message' => "Transaction successful"
+                    'message' => "Transaction successful",
+                    'mail' => $mail
             ]);
 
 
