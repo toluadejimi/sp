@@ -23,6 +23,6 @@ class Fundwallet extends Mailable
 
     public function build()
     {
-        return $this->view('mail-templates.user.fund_wallet')->with(['name' =>  $this->first_name, 'amount' => $this->amount]);
+        return $this->view('mail-templates.fundwallet')->with(['name' =>  $this->first_name, 'amount' => $this->amount]);
     }
 }
