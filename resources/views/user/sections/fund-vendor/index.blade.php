@@ -15,7 +15,11 @@
 
 @section('content')
 
-<div class="body-wrapper">
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+
+    <div class="body-wrapper">
     <div class="deposit-wrapper ptb-50">
         <div class="container">
             <div class="row justify-content-center">
@@ -344,9 +348,8 @@
         async function sendPostRequest() {
             const vendorId = email2Input.value;
             const email = emailInput.value;
-            const csrfToken = getCSRFToken();
-
-            console.log(csrfToken);
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            console.log('CSRF Tokenme:', token);
 
             if (!vendorId || !email) {
                 usernameLabel.textContent = "Both fields are required.";
@@ -354,14 +357,13 @@
             }
 
             try {
-                console.log(csrfToken);
 
-                console.log('CSRF Token:', csrfToken);
+                console.log('CSRF Token:', token);
                 const response = await fetch("{{ url('user/transfer/money/vendor/checkusername') }}", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": csrfToken,
+                        "X-CSRF-TOKEN": token,
                     },
                     body: JSON.stringify({ vendor_id: vendorId, email: email }),
                 });

@@ -39,7 +39,7 @@ Route::prefix("user")->name("user.")->group(function(){
 
     });
     //Transfer  Money
-    Route::controller(TransferMoneyController::class)->prefix('transfer-money')->name('transfer.money.')->middleware('kyc.verification.guard')->group(function(){
+    Route::controller(TransferMoneyController::class)->prefix('transfer-money')->name('transfer.money.')->group(function(){
         Route::get('/','index')->name('index');
         Route::post('confirmed','confirmed')->name('confirmed');
         Route::post('vendorsend','vendor_send')->name('vendorsend');
@@ -48,7 +48,7 @@ Route::prefix("user")->name("user.")->group(function(){
         Route::post('user/exist','checkUser')->name('check.exist');
         Route::post('vendor/exist','check_vendor')->name('vendor.exist');
         Route::post('user-vendor/exist','check_user_vendor')->name('check.user.vendor.exist');
-        Route::post('user-vendor/checkusername','check_username')->name('vendor.checkusername');
+        Route::get('user-vendor/checkusername','check_username')->name('vendor.checkusername');
 
 
         Route::get('fund-vendor','pay_vendor')->name('vendor');
